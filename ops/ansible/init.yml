@@ -1,0 +1,70 @@
+# ------------------------------------------------------------------------------------------------
+# Ansible script for initializing the development cluster environment
+#
+# @since agentic-flow--JP
+# ------------------------------------------------------------------------------------------------
+
+- name: Initialize the local development cluster
+  hosts: localhost
+  vars_prompt:
+    - name: jwt_secret
+      prompt: "JWT secret key (used for jwt-secret in cluster)"
+      private: true
+
+    - name: rabbitmq_password
+      prompt: "RabbitMQ password (used for RabbitMQ in cluster)"
+      private: true
+
+  vars:
+    project_root: "{{ playbook_dir }}/../.."
+
+  tasks:
+    - name: Check if dev-vars.yml exists
+      ansible.builtin.stat:
+        path: "{{ project_root }}/dev-vars.yml"
+      register: dev_vars_stat
+
+    - name: Load dev-vars.yml when present (so host_domain can come from file)
+      ansible.builtin.include_vars:
+        file: "{{ project_root }}/dev-vars.yml"
+      when: dev_vars_stat.stat.exists
+
+    - name: Set host_domain from loaded dev-vars.yml
+      ansible.builtin.set_fact:
+        host_domain: "{{ HOST_DOMAIN }}"
+      when: dev_vars_stat.stat.exists
+
+    - name: Prompt for host_domain when creating dev-vars for the first time
+      ansible.builtin.pause:
+        prompt: "Host domain for local dev (Example: reporter.com)"
+      register: host_domain_prompt
+      when: not dev_vars_stat.stat.exists
+
+    - name: Set host_domain from first-time prompt
+      ansible.builtin.set_fact:
+        host_domain: "{{ (host_domain_prompt.user_input | default('') | trim) or 'reporter.com' }}"
+      when: not dev_vars_stat.stat.exists
+
+    - name: Generate dev-vars.yml from template
+      ansible.builtin.template:
+        src: "{{ project_root }}/ops/templates/dev-vars.yml-tpl"
+        dest: "{{ project_root }}/dev-vars.yml"
+      when: not dev_vars_stat.stat.exists
+
+    - name: Add {{ host_domain }} domain to /etc/hosts for local development
+      block:
+        - name: Ensure reporter local dev hosts comment in /etc/hosts
+          ansible.builtin.lineinfile:
+            path: /etc/hosts
+            line: "# reporter project hosts"
+            state: present
+            create: true
+          become: true
+
+        - name: Ensure {{ host_domain }} resolves to 127.0.0.1 in /etc/hosts
+          ansible.builtin.lineinfile:
+            path: /etc/hosts
+            line: "127.0.0.1 {{ host_domain }}"
+            state: present
+            create: true
+          become: true

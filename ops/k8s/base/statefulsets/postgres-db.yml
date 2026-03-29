@@ -1,0 +1,79 @@
+# ------------------------------------------------------------------------------------------------
+# PostgreSQL for cl-reporter (Drizzle / architecture-v1.md).
+#
+# Unrelated to RabbitMQ: ops/docker/rabbitmq/Dockerfile builds only the message broker image.
+# Optional custom Postgres (init SQL): ops/docker/db/Dockerfile — not wired in Skaffold unless
+# you add a build.artifact + point this StatefulSet at that image.
+#
+# @since app-skaffold--JP
+# ------------------------------------------------------------------------------------------------
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cl-reporter-db-statefulset
+  namespace: default
+spec:
+  serviceName: cl-reporter-db-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cl-reporter-db
+  template:
+    metadata:
+      labels:
+        app: cl-reporter-db
+    spec:
+      containers:
+        - name: cl-reporter-db
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_USER
+              value: "cl_reporter"
+            - name: POSTGRES_PASSWORD
+              value: "cl_reporter_dev"
+            - name: POSTGRES_DB
+              value: "cl_reporter"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: ebs-csi-gp2
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cl-reporter-db-headless
+  namespace: default
+spec:
+  clusterIP: None
+  selector:
+    app: cl-reporter-db
+  ports:
+    - name: db
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cl-reporter-db-srv
+  namespace: default
+spec:
+  selector:
+    app: cl-reporter-db
+  ports:
+    - name: db
+      protocol: TCP
+      port: 5432
+      targetPort: 5432

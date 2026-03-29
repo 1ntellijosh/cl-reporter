@@ -1,0 +1,14 @@
+# ------------------------------------------------------------------------------------------------
+# StorageClass for Kind/local using the same name as prod (ebs-csi-gp2) so base StatefulSets
+# work unchanged. Uses rancher.io/local-path provisioner; 'make start' installs it automatically (see Makefile prerequisites).
+#
+# @since app-skaffold--JP
+# ------------------------------------------------------------------------------------------------
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-csi-gp2
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete

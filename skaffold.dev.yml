@@ -1,0 +1,53 @@
+################################################################################
+# Config file for using Skaffold in local development
+#
+# @since agentic-flow--JP
+################################################################################
+
+apiVersion: skaffold/v4beta13
+kind: Config
+build:
+  local:
+    push: false
+  artifacts:
+    # db-api removed — use Drizzle + DATABASE_URL from client/workers/oauth-api (see docs/architecture-v1.md)
+    - image: 1ntellijosh/cl-reporter-oauth-api
+      context: .
+      custom:
+        buildCommand: docker build -f ops/docker/oauth-api/dev.Dockerfile -t $IMAGE $BUILD_CONTEXT
+        dependencies:
+          paths:
+            - oauth-api/**/*
+            - packages/dist/**/*
+      sync:
+        manual:
+          - src: 'oauth-api/src/**/*.ts'
+            dest: /app/src
+            strip: oauth-api/src/
+          - src: 'oauth-api/tsconfig.json'
+            dest: /app
+            strip: oauth-api/
+    - image: 1ntellijosh/cl-reporter-client
+      context: .
+      custom:
+        buildCommand: docker build -f ops/docker/client/dev.Dockerfile -t $IMAGE $BUILD_CONTEXT
+        dependencies:
+          paths:
+            - client/**/*
+            - packages/dist/**/*
+      sync:
+        manual:
+          - src: 'client/**/*'
+            dest: .
+            strip: 'client/'
+manifests:
+  rawYaml:
+    - ./ops/k8s/base/statefulsets/postgres-db.yml
+    - ./ops/k8s/base/deployments/oauth-api.yml
+    - ./ops/k8s/base/deployments/client.yml
+    - ./ops/k8s/overlays/dev/ingress-srv.yml
+    - ./ops/k8s/overlays/dev/storageclass-local.yml
+    # RabbitMQ is applied by setup-cluster.yml only to speed up cluster setup;
+    # including it here ALSO would break skaffold sync
+deploy:
+  kubectl: {}

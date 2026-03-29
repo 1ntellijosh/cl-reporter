@@ -1,0 +1,18 @@
+node_modules
+**/node_modules
+dev-vars.yml
+.ansible-docker-config
+ops/ansible/.ansible-docker-config
+
+# Build output (TypeScript, etc.)
+**/dist
+
+# Next.js build output and cache
+.next
+**/.next
+
+# TypeScript/build output (packages/common, packages/middleware, etc.)
+dist
+**/dist
+*.tsbuildinfo
+**/*.tsbuildinfo
