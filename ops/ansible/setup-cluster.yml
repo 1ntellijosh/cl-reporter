@@ -40,6 +40,47 @@
       args:
         chdir: "{{ project_root }}"
 
+    # Database credentials secrets must exist before Postgres StatefulSet starts,
+    # since the StatefulSet reads POSTGRES_USER/POSTGRES_PASSWORD from these secrets.
+    - name: Set database credentials from dev-vars.yml
+      ansible.builtin.set_fact:
+        database_user: "{{ DATABASE_USER }}"
+        database_password: "{{ DATABASE_PASSWORD }}"
+        database_url: "{{ DATABASE_URL }}"
+
+    - name: Create Kubernetes secret database-url from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic database-url
+        --from-literal=DATABASE_URL={{ database_url | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: database_url_result
+      changed_when: "'configured' in database_url_result.stdout or 'created' in database_url_result.stdout"
+
+    - name: Create Kubernetes secret database-user from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic database-user
+        --from-literal=DATABASE_USER={{ database_user | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: database_user_result
+      changed_when: "'configured' in database_user_result.stdout or 'created' in database_user_result.stdout"
+
+    - name: Create Kubernetes secret database-password from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic database-password
+        --from-literal=DATABASE_PASSWORD={{ database_password | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: database_password_result
+      changed_when: "'configured' in database_password_result.stdout or 'created' in database_password_result.stdout"
+
     # StorageClass + Postgres StatefulSet early so PVC can bind and Postgres can start while ingress/RabbitMQ/builds run (architecture-v1.md §8.1).
     - name: Apply Postgres (StorageClass + StatefulSet/Services)
       ansible.builtin.shell: >
@@ -187,6 +228,12 @@
     - name: Wait for Postgres StatefulSet ready (before app deployments)
       ansible.builtin.shell: >
         make wait-postgres-db
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Apply Postgres migrations with Drizzle
+      ansible.builtin.shell: >
+        make db:migrate
       args:
         chdir: "{{ project_root }}"
 

@@ -32,9 +32,15 @@ spec:
               name: postgres
           env:
             - name: POSTGRES_USER
-              value: "cl_reporter"
+              valueFrom:
+                secretKeyRef:
+                  name: database-user
+                  key: DATABASE_USER
             - name: POSTGRES_PASSWORD
-              value: "cl_reporter_dev"
+              valueFrom:
+                secretKeyRef:
+                  name: database-password
+                  key: DATABASE_PASSWORD
             - name: POSTGRES_DB
               value: "cl_reporter"
           volumeMounts:
