@@ -5,17 +5,31 @@
 # ------------------------------------------------------------------------------------------------
 
 ##
+# LOCAL DEV CONFIG
+# --------------------------
+HOST_DOMAIN: {{ host_domain }}
+JWT_SECRET: {{ jwt_secret }}
+
+##
 # CLOVER API CONFIG
 # --------------------------
-# Clover API credentials from your Clover developer account
 CLOVER_CLIENT_ID:
 CLOVER_CLIENT_SECRET:
 
-JWT_SECRET: {{ jwt_secret }}
+##
+# DATABASE CONFIG
+# --------------------------
+DATABASE_URL: postgresql://cl_reporter:cl_reporter_dev@cl-reporter-db-srv:5432/cl_reporter
+DATABASE_USER: cl_reporter
+DATABASE_PASSWORD: cl_reporter_dev
 
-HOST_DOMAIN: {{ host_domain }}
-
+##
+# RABBITMQ CONFIG
+# --------------------------
 RABBITMQ_PASSWORD: "{{ rabbitmq_password | default('reporter-dev-rabbitmq') }}"
 
+##
+# CLUSTER CONFIG
+# --------------------------
 # Hard coded for ingress-nginx controller service (http://<service-name>.<namespace>.svc.cluster.local)
 SERVER_API_BASE_URL: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local

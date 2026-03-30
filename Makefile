@@ -1,6 +1,6 @@
 # Makefile for cl-reporter project
 
-.PHONY: commit push sq
+.PHONY: commit push sq schema-change-migration scheme-change-migration db\:psql
 
 
 # GIT COMMANDS
@@ -197,3 +197,34 @@ build-shared-packages:
 	@echo "Building shared packages..."
 	npm install
 	rm -f packages/tsconfig.tsbuildinfo && cd packages && npm run build
+
+##
+# DATABASE COMMANDS:
+# --------------------------
+
+# Drizzle migrations (ops/database/migrations). If DATABASE_URL is unset, uses kubectl port-forward to cl-reporter-db-srv:15432→5432 (Kind local dev).
+db\:migrate:
+	@if [ -n "$$DATABASE_URL" ]; then \
+		npm run db:migrate -w @reporter/core; \
+	else \
+		set -e; \
+		kubectl port-forward svc/cl-reporter-db-srv 15432:5432 -n default & \
+		PF_PID=$$!; \
+		trap 'kill $$PF_PID 2>/dev/null || true' EXIT; \
+		sleep 2; \
+		DB_URL_ENC=$$(kubectl get secret database-url -n default -o jsonpath='{.data.DATABASE_URL}' 2>/dev/null || true); \
+		DB_URL=$$(echo "$$DB_URL_ENC" | base64 -d); \
+		DATABASE_URL=$$(node -e "const u=new URL(process.argv[1]); u.hostname='127.0.0.1'; u.port='15432'; console.log(u.toString())" "$$DB_URL"); \
+		export DATABASE_URL; \
+		npm run db:migrate -w @reporter/core; \
+	fi
+
+# After editing packages/src/drizzle-orm/schema.ts: generate migration SQL, then apply to DB (same as db:generate + db:migrate).
+schema-change-migration:
+	npm run db:generate -w @reporter/core
+	$(MAKE) db:migrate
+
+# Open an interactive psql session against the in-cluster Postgres pod.
+# Uses POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB environment variables inside the container.
+db\:psql:
+	kubectl exec -it -n default cl-reporter-db-statefulset-0 -- sh -c 'PGPASSWORD="$$POSTGRES_PASSWORD" psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'

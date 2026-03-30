@@ -25,7 +25,10 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: DATABASE_URL
-              value: postgresql://cl_reporter:cl_reporter_dev@cl-reporter-db-srv:5432/cl_reporter
+              valueFrom:
+                secretKeyRef:
+                  name: database-url
+                  key: DATABASE_URL
             - name: RABBITMQ_CLIENT_ID
               valueFrom:
                 fieldRef:

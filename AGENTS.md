@@ -52,6 +52,8 @@ npm test
 
 *(Adjust if the repo uses `pnpm` or `yarn`.)*
 
+**Database (Drizzle):** shared schema lives under **`packages/src/drizzle-orm/`** (exported from **`@reporter/core`** and **`@reporter/core/drizzle-orm`**); **`packages/drizzle.config.ts`** drives **`drizzle-kit generate`**; **`ops/database/migrate.ts`** runs migrations against **`ops/database/migrations`**. Apply migrations with **`make db:migrate`** (uses **`kubectl port-forward`** to in-cluster Postgres when **`DATABASE_URL`** is unset) or set **`DATABASE_URL`** and run **`npm run db:migrate -w @reporter/core`**. Generate new migrations: **`npm run db:generate -w @reporter/core`**. After you edit **`packages/src/drizzle-orm/schema.ts`**, you can run **`make schema-change-migration`** (alias: **`make scheme-change-migration`**) to **generate** and **apply** in one step.
+
 ## Conventions
 
 - Prefer small, reviewable changes tied to a clear goal from the PRD.

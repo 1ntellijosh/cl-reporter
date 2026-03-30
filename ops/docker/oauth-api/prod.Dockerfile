@@ -12,8 +12,6 @@ WORKDIR /app
 # Copy workspace packages (built dist + package.json)
 COPY packages/package.json ./packages/
 COPY packages/dist ./packages/dist
-COPY packages/package.json ./packages/
-COPY packages/dist ./packages/dist
 
 # Copy oauth-api package.json and point workspace deps to local packages
 COPY oauth-api/package.json ./package.json.tmp

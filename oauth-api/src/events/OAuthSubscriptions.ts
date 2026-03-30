@@ -3,8 +3,12 @@
  *
  * @since app-skaffold--JP
  */
-import { ServiceSubscription, EventTypesEnum, TokenUpdateRefreshTokenData, ProcessedEventRepository } from '@reporter/core';
-import { DELAYED_EXCHANGE_NAME, ConsumeIdempotently, AbstractProcessedEventRepository } from '@reporter/core';
+import {
+  ServiceSubscription,
+  EventTypesEnum,
+  TokenUpdateRefreshTokenData,
+  DELAYED_EXCHANGE_NAME,
+} from '@reporter/core';
 // import { ProcessedEventsRepository } from '@reporter/core';
 
 // const processedEventRepo = new AbstractProcessedEventRepository();
