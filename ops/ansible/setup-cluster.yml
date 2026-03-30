@@ -1,0 +1,209 @@
+# ------------------------------------------------------------------------------------------------
+# Ansible script for setting up local cluster environment for cl-reporter project development
+#
+# @since app-skaffold--JP
+# ------------------------------------------------------------------------------------------------
+
+- name: Setup local cluster environment for cl-reporter project development
+  hosts: localhost
+
+  vars:
+    project_root: "{{ playbook_dir }}/../.."
+    # Custom image with rabbitmq_delayed_message_exchange plugin (x-delayed-message) for report.expired delay
+    rabbitmq_image: "reporter-rabbitmq:3.13-management"
+
+  tasks:
+    - name: Check if dev-vars.yml exists
+      ansible.builtin.stat:
+        path: "{{ project_root }}/dev-vars.yml"
+      register: dev_vars_stat
+
+    - name: Fail when dev-vars.yml is missing (run dev-init first)
+      ansible.builtin.assert:
+        that: dev_vars_stat.stat.exists
+        fail_msg: "dev-vars.yml not found. Run 'make init' so dev-init.yml creates it first."
+      when: not dev_vars_stat.stat.exists
+
+    - name: Load dev-vars.yml (get JWT_SECRET etc.)
+      ansible.builtin.include_vars:
+        file: "{{ project_root }}/dev-vars.yml"
+
+    - name: Initialize the local development cluster
+      ansible.builtin.shell: >
+        make kstart
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Install Rancher local-path-provisioner for Kind (StatefulSet PVCs; used by storageclass-local.yml)
+      ansible.builtin.shell: >
+        kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
+      args:
+        chdir: "{{ project_root }}"
+
+    # StorageClass + Postgres StatefulSet early so PVC can bind and Postgres can start while ingress/RabbitMQ/builds run (architecture-v1.md §8.1).
+    - name: Apply Postgres (StorageClass + StatefulSet/Services)
+      ansible.builtin.shell: >
+        make apply-postgres-db
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Apply ingress-nginx controller deployment
+      ansible.builtin.shell: >
+        make init-ingress
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Wait for ingress-nginx controller deployment (pods may not exist yet right after apply)
+      ansible.builtin.shell: >
+        make wait-ingress
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Create messaging namespace if missing
+      ansible.builtin.shell: >
+        make add-messaging-namespace
+      args:
+        chdir: "{{ project_root }}"
+
+    # Build RabbitMQ image with delayed message exchange plugin and load into Kind
+    - name: Build RabbitMQ image with rabbitmq_delayed_message_exchange plugin
+      ansible.builtin.shell: >
+        docker build -t {{ rabbitmq_image }} -f {{ project_root }}/ops/docker/rabbitmq/Dockerfile {{ project_root }}
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Load RabbitMQ image into Kind cluster
+      ansible.builtin.shell: >
+        kind load docker-image {{ rabbitmq_image }} --name reporter-cluster
+      args:
+        chdir: "{{ project_root }}"
+
+    # RabbitMQ: playbook applies Deployment/Service (Skaffold excludes it to avoid sync issues)
+    - name: Create RabbitMQ auth secret in messaging namespace
+      ansible.builtin.shell: >
+        kubectl create secret generic rabbitmq-auth -n messaging
+        --from-literal=password={{ (RABBITMQ_PASSWORD | default('reporter-dev-rabbitmq')) | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Apply RabbitMQ Deployment and Service in messaging namespace
+      ansible.builtin.shell: >
+        kubectl apply -f {{ project_root }}/ops/k8s/base/statefulsets/rabbit-mq.yml
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Set the RabbitMQ URL fact (from dev-vars password)
+      ansible.builtin.set_fact:
+        rabbitmq_url: "amqp://user:{{ RABBITMQ_PASSWORD | default('reporter-dev-rabbitmq') }}@rabbitmq.messaging.svc.cluster.local:5672"
+
+    - name: Inject RabbitMQ URL into deployments namespace secrets
+      ansible.builtin.shell: >
+        kubectl create secret generic rabbitmq-url
+        --from-literal=RABBITMQ_URL={{ rabbitmq_url | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: rabbitmq_url_result
+      changed_when: "'configured' in rabbitmq_url_result.stdout or 'created' in rabbitmq_url_result.stdout"
+
+    - name: Set jwt_secret from dev-vars.yml
+      ansible.builtin.set_fact:
+        jwt_secret: "{{ JWT_SECRET }}"
+
+    - name: Create Kubernetes secret jwt-secret from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic jwt-secret
+        --from-literal=JWT_KEY={{ jwt_secret }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: jwt_secret_result
+      changed_when: "'configured' in jwt_secret_result.stdout or 'created' in jwt_secret_result.stdout"
+
+    - name: Set Clover client credentials from dev-vars.yml
+      ansible.builtin.set_fact:
+        clover_client_id: "{{ CLOVER_CLIENT_ID }}"
+        clover_client_secret: "{{ CLOVER_CLIENT_SECRET }}"
+
+    - name: Create Kubernetes secret clover-client-id from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic clover-client-id
+        --from-literal=CLOVER_CLIENT_ID={{ clover_client_id | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: clover_client_id_result
+      changed_when: "'configured' in clover_client_id_result.stdout or 'created' in clover_client_id_result.stdout"
+
+    - name: Create Kubernetes secret clover-client-secret from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic clover-client-secret
+        --from-literal=CLOVER_CLIENT_SECRET={{ clover_client_secret | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: clover_client_secret_result
+      changed_when: "'configured' in clover_client_secret_result.stdout or 'created' in clover_client_secret_result.stdout"
+
+    - name: Set server_api_base_url from dev-vars.yml
+      ansible.builtin.set_fact:
+        server_api_base_url: "{{ SERVER_API_BASE_URL }}"
+
+    - name: Create Kubernetes secret server-api-base-url from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic server-api-base-url
+        --from-literal=SERVER_API_BASE_URL={{ server_api_base_url }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: server_api_base_url_result
+      changed_when: "'configured' in server_api_base_url_result.stdout or 'created' in server_api_base_url_result.stdout"
+
+    - name: Build shared packages
+      ansible.builtin.shell: >
+        make build-shared-packages
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Build local dev images
+      ansible.builtin.shell: >
+        make build-dev-images
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Load images into Kind cluster
+      ansible.builtin.shell: >
+        make kload-imgs
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Wait for Postgres StatefulSet ready (before app deployments)
+      ansible.builtin.shell: >
+        make wait-postgres-db
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Apply deployments
+      ansible.builtin.shell: >
+        make apply-deployments
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Apply ingress
+      ansible.builtin.shell: >
+        make apply-ingress
+      args:
+        chdir: "{{ project_root }}"
+
+    - name: Cluster setup complete
+      ansible.builtin.debug:
+        msg:
+          - "Cluster setup complete. Run 'make dev' to start the development environment."
+          - "To open RabbitMQ management UI: Run 'make rabbit-management', then go to http://localhost:15672 in browser"

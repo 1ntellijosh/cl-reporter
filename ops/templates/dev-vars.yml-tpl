@@ -1,0 +1,21 @@
+# ------------------------------------------------------------------------------------------------
+# Development environment variables template for local dev app of cl-reporter project
+#
+# @since agentic-flow--JP
+# ------------------------------------------------------------------------------------------------
+
+##
+# CLOVER API CONFIG
+# --------------------------
+# Clover API credentials from your Clover developer account
+CLOVER_CLIENT_ID:
+CLOVER_CLIENT_SECRET:
+
+JWT_SECRET: {{ jwt_secret }}
+
+HOST_DOMAIN: {{ host_domain }}
+
+RABBITMQ_PASSWORD: "{{ rabbitmq_password | default('reporter-dev-rabbitmq') }}"
+
+# Hard coded for ingress-nginx controller service (http://<service-name>.<namespace>.svc.cluster.local)
+SERVER_API_BASE_URL: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local

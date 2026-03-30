@@ -1,0 +1,10 @@
+---
+description: Align implementation with product requirements in docs/PRD.md
+alwaysApply: true
+---
+
+# PRD alignment
+
+- Treat `docs/PRD.md` as the product source of truth for scope, users, core jobs, integrations, constraints, success criteria, and non-goals.
+- If requirements are ambiguous, ask for clarification or record assumptions under **Open questions** in `docs/PRD.md` rather than inventing major product behavior.
+- Follow repo workflow and commands in root `AGENTS.md` when running or testing the app.

@@ -1,0 +1,46 @@
+# ------------------------------------------------------------------------------------------------
+# client app k8s deployment file for cl-reporter project
+#
+# @since agentic-flow--JP
+# ------------------------------------------------------------------------------------------------
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-dpl
+  namespace: default
+spec:
+  replicas: 1 # for now
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: 1ntellijosh/cl-reporter-client
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_API_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: server-api-base-url
+                  key: SERVER_API_BASE_URL
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-srv
+spec:
+  selector:
+    app: client
+  ports:
+    - name: client
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

@@ -1,0 +1,15 @@
+# ------------------------------------------------------------------------------------------------
+# kustomization file for Clover Reporter project
+# @since github-deploy--JP
+# ------------------------------------------------------------------------------------------------
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Ingress is overlay-specific: prod uses ingress-alb.yml (ALB), dev uses ingress-srv.yml (nginx).
+resources:
+  - namespace-messaging.yml
+  - deployments/client.yml
+  - deployments/oauth-api.yml
+  - statefulsets/postgres-db.yml
+  - statefulsets/rabbit-mq.yml

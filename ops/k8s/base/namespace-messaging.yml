@@ -1,0 +1,10 @@
+# ------------------------------------------------------------------------------------------------
+# Namespace for RabbitMQ (and other messaging resources). Required for EKS; local Kind uses add-messaging-namespace.
+#
+# @since app-skaffold--JP
+# ------------------------------------------------------------------------------------------------
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: messaging

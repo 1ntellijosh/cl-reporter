@@ -1,0 +1,17 @@
+{
+  "name": "cl-reporter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Custom reporting app for Clover Marketplace",
+  "workspaces": [
+    "packages",
+    "oauth-api",
+    "client"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  },
+  "author": "1ntellijosh",
+  "license": "ISC"
+}

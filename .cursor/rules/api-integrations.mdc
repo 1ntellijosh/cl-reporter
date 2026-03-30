@@ -1,0 +1,14 @@
+---
+description: Keep external API usage documented when changing API or integration code
+globs: src/**/*
+alwaysApply: false
+---
+
+# API and integrations
+
+When adding or changing HTTP clients, OAuth flows, webhooks, or vendor SDK usage (including Clover):
+
+- Update the **Integrations** section in `docs/PRD.md` (endpoints, purpose, sandbox vs production), **or** maintain a dedicated `docs/api-contracts.md` and reference it from the PRD.
+- Add or update `.env.example` (or equivalent) for any new required environment variables; never commit real secrets.
+
+If `src/` does not exist yet, apply the same discipline to the first integration module the project uses (adjust paths or add a rule with matching globs).
