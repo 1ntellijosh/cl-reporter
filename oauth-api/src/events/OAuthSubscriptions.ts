@@ -8,8 +8,8 @@ import {
   EventTypesEnum,
   TokenUpdateRefreshTokenData,
   DELAYED_EXCHANGE_NAME,
-} from '@reporter/core';
-// import { ProcessedEventsRepository } from '@reporter/core';
+} from '@reporter/middleware';
+// import { ProcessedEventsRepository } from '@reporter/middleware';
 
 // const processedEventRepo = new AbstractProcessedEventRepository();
 

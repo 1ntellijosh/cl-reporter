@@ -10,17 +10,24 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { getTheme, type ThemeMode } from './theme';
 import { LS_KEYS, LocalStore } from '../lib/localstorage/LocalStore';
+import type { BillingStatus } from '../lib/billing/BillingStatus';
+import { SubscriptionProvider } from '../state/SubscriptionContext';
 
 const queryClient = new QueryClient();
 
 type ProvidersProps = {
   children: React.ReactNode;
+  /** Seeded from server `cookies()` so first paint matches OAuth redirect without waiting on React Query. */
+  initialBillingStatus?: BillingStatus | null;
 };
 
 /**
  * Client-only wrapper: theme state, theme toggle (all routes), and core providers.
  */
-export default function Providers({ children }: ProvidersProps) {
+export default function Providers({
+  children,
+  initialBillingStatus = null,
+}: ProvidersProps) {
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('light');
   const [mounted, setMounted] = useState(false);
 
@@ -52,6 +59,7 @@ export default function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+        <SubscriptionProvider initialBillingStatus={initialBillingStatus}>
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <Box component="main" sx={{ position: 'relative', minHeight: '100vh', paddingBottom: footerHeight }}>
@@ -84,6 +92,7 @@ export default function Providers({ children }: ProvidersProps) {
               />
             </Box>
           </ThemeProvider>
+        </SubscriptionProvider>
       </AppRouterCacheProvider>
     </QueryClientProvider>
   );

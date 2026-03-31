@@ -10,9 +10,9 @@ Complete these in the [Global Developer Dashboard](https://www.clover.com/develo
 
 ### 1.1 App and environment
 
-- [ ] **Create or select** the cl-reporter app (sandbox).
-- [ ] Note **sandbox vs production** app IDs — use the correct **`client_id` / `client_secret`** per environment (never commit secrets).
-- [ ] Set **Site URL** / web app settings per [Clover app configuration](https://docs.clover.com/) (exact fields change over time — match current docs).
+- [X] **Create or select** the cl-reporter app (sandbox).
+- [X] Note **sandbox vs production** app IDs — use the correct **`client_id` / `client_secret`** per environment (never commit secrets).
+- [X] Set **Site URL** / web app settings per [Clover app configuration](https://docs.clover.com/) (exact fields change over time — match current docs).
 
 ### 1.2 Site URL and `redirect_uri` (there is **no** separate “URL list” in Clover)
 
@@ -26,9 +26,9 @@ Clover’s dashboard does **not** show a multi-entry “redirect URI allowlist�
 
 So: **set Site URL** to a base you control; implement your callback as a **subpath** under it; use that full URL as **`redirect_uri`** in authorize. **Not** a separate file in the repo — **REST Configuration** in the dashboard + your app’s authorize request must agree.
 
-- [ ] Set **Site URL** (sandbox) to the **base** URL that matches how you reach the app (e.g. `https://your-tunnel.example/api` or `https://127.0.0.1:8443` if allowed — **confirm scheme/host rules** in current Clover docs).
-- [ ] Choose one **callback path** under that base (e.g. `/auth/clover/callback`) and use the **full** URL as **`redirect_uri`** in code; it must stay a **subpath** of Site URL per Clover rules.
-- [ ] For **kind** / local dev, the browser must open the **same** host + scheme you put in Site URL; if you change domain or port, **update Site URL** (and any **Alternate Launch Path** you use).
+- [X] Set **Site URL** (sandbox) to the **base** URL that matches how you reach the app (e.g. `https://your-tunnel.example/api` or `https://127.0.0.1:8443` if allowed — **confirm scheme/host rules** in current Clover docs).
+- [X] Choose one **callback path** under that base (e.g. `/auth/clover/callback`) and use the **full** URL as **`redirect_uri`** in code; it must stay a **subpath** of Site URL per Clover rules.
+- [X] For **kind** / local dev, the browser must open the **same** host + scheme you put in Site URL; if you change domain or port, **update Site URL** (and any **Alternate Launch Path** you use).
 - [ ] Repeat for **production** app settings when you have a prod app and hostname.
 
 ### 1.3 `state`, high-trust vs low-trust, PKCE — **not** Clover dashboard fields
@@ -41,9 +41,9 @@ You will **not** see **“state”**, **“high trust”**, or **“PKCE”** to
 | **High-trust vs low-trust** | Industry shorthand: **confidential** client (server has **`client_secret`**, code exchange on server) vs **public** client (no secret; often **PKCE**). Clover shows **App ID / App Secret** for REST web apps — using the secret **only on the server** **is** the confidential / “high-trust” pattern. There is usually **no** separate “trust mode” switch. |
 | **PKCE** | Extra OAuth steps **in code** if [Clover’s docs](https://docs.clover.com/dev/docs/oauth-flows-in-clover) require them for your flow — not a field next to Site URL. |
 
-- [ ] **`state`:** Implement generate + store + verify on callback — **§2.1** (not configured in Clover).
-- [ ] **Confidential client:** Keep **`client_secret`** on the server; exchange **`code`** for tokens **only** in server routes — matches **REST Clients** + secret in the dashboard.
-- [ ] **PKCE:** Read current Clover docs for your app type; if required, implement **code_challenge** / **code_verifier** (no separate dashboard checkbox assumed).
+- [X] **`state`:** Implement generate + store + verify on callback — **§2.1** (not configured in Clover).
+- [X] **Confidential client:** Keep **`client_secret`** on the server; exchange **`code`** for tokens **only** in server routes — matches **REST Clients** + secret in the dashboard.
+- [X] **PKCE:** **Not required** for this repo’s flow. Clover’s **[high-trust auth code flow](https://docs.clover.com/dev/docs/high-trust-app-auth-flow)** exchanges `code` using **`client_id`** + **`client_secret`** on `/oauth/v2/token` (no **`code_challenge`** / **`code_verifier`**). **[PKCE](https://docs.clover.com/dev/docs/oauth-flow-for-low-trust-apps-pkce)** is for **low-trust** apps that cannot store a client secret. “[Online integration](https://docs.clover.com/dev/docs/select-an-integration)” picks REST/API building blocks; it does not override that split — a server-side confidential client still follows high-trust.
 
 ### 1.4 OAuth permissions (scopes) for v1
 
@@ -53,8 +53,8 @@ You will **not** see **“state”**, **“high trust”**, or **“PKCE”** to
 
 ### 1.5 Test merchant
 
-- [ ] Create or use a **sandbox test merchant** (merchant credentials are separate from the developer login).
-- [ ] **Install** the app / complete OAuth once to verify redirect + token exchange end-to-end.
+- [X] Create or use a **sandbox test merchant** (merchant credentials are separate from the developer login).
+- [X] **Install** the app / complete OAuth once to verify redirect + token exchange end-to-end.
 
 ---
 
@@ -91,23 +91,23 @@ Example (shape only):
 
 ### 2.2 OAuth implementation (must match dashboard)
 
-- [ ] Build **authorize URL** as in §2.1; **`redirect_uri`** matches env and Site URL rules.
-- [ ] **Callback handler:** Validate **`state`**, exchange **`code`** with **`client_secret`** server-side only, persist Clover tokens per **`docs/authorization-flow.md`**.
+- [X] Build **authorize URL** as in §2.1; **`redirect_uri`** matches env and Site URL rules.
+- [X] **Callback handler:** Validate **`state`**, exchange **`code`** with **`client_secret`** server-side only, persist Clover tokens per **`docs/authorization-flow.md`**.
 - [ ] **Idempotency:** Do not process the same `code` twice.
 
 ### 2.3 Environment variables
 
-- [ ] Add **`client_id`** and **`client_secret`** (sandbox) to local/secret store — document names in **`.env.example`** when the app exists.
-- [ ] Base URL / **`redirect_uri`** in env matches **Site URL + subpath** from §1.2.
+- [X] Add **`client_id`** and **`client_secret`** (sandbox) to local/secret store — document names in **`.env.example`** when the app exists.
+- [X] Base URL / **`redirect_uri`** in env matches **Site URL + subpath** from §1.2.
 
 ---
 
 ## 3. Local development — run the web app
 
-- [ ] **Node / package manager** installed per team standard.
-- [ ] **`npm install`** (or `pnpm` / `yarn`) at repo root once **`package.json`** exists.
-- [ ] **`npm run dev`** (or documented script) — see root **`AGENTS.md`**.
-- [ ] If OAuth **requires a public HTTPS URL** for callbacks, run a **tunnel** to your local port and set **Site URL** (§1.2) to a **base** that matches.
+- [X] **Node / package manager** installed per team standard.
+- [X] **`npm install`** (or `pnpm` / `yarn`) at repo root once **`package.json`** exists.
+- [X] **`npm run dev`** (or documented script) — see root **`AGENTS.md`**.
+- [X] If OAuth **requires a public HTTPS URL** for callbacks, run a **tunnel** to your local port and set **Site URL** (§1.2) to a **base** that matches.
 
 ### 3.1 Optional: column mapping sandbox pass
 

@@ -10,12 +10,14 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 # Copy workspace packages (built dist + package.json)
-COPY packages/package.json ./packages/
-COPY packages/dist ./packages/dist
+COPY packages/common/package.json ./common/packages/
+COPY packages/common/dist ./packages/common/dist
+COPY packages/middleware/package.json ./packages/middleware/
+COPY packages/middleware/dist ./packages/middleware/dist
 
 # Copy oauth-api package.json and point workspace deps to local packages
 COPY oauth-api/package.json ./package.json.tmp
-RUN sed 's|"@reporter/core": "\*"|"@reporter/core": "file:./packages"|g' ./package.json.tmp > ./package.json && rm ./package.json.tmp
+RUN sed 's|"@reporter/common": "\*"|"@reporter/common": "file:./packages/common"|g; s|"@reporter/middleware": "\*"|"@reporter/middleware": "file:./packages/middleware"|g' ./package.json.tmp > ./package.json && rm ./package.json.tmp
 
 # Install production dependencies only
 RUN npm install --omit=dev

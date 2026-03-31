@@ -4,7 +4,7 @@
 
 **Sources of truth:** [`PRD.md`](PRD.md) (especially §8 wizard payload, §10 entities, OAuth/token maintenance §3). When implementation diverges, update **this file** and the PRD if the product intent changed.
 
-**Runtime access:** Per [`architecture-v1.md`](architecture-v1.md), **trusted** server processes (**Next.js server** for the **`client`** app, **report workers**, **`oauth-api`**, **cron sweep**) connect to PostgreSQL with **`DATABASE_URL`** using a **shared** schema (**Drizzle** in **`packages/src/drizzle-orm/`**, imported via **`@reporter/core`** / **`@reporter/core/drizzle-orm`**). The **browser** never receives `DATABASE_URL`. The tables below are the **logical** model.
+**Runtime access:** Per [`architecture-v1.md`](architecture-v1.md), **trusted** server processes (**Next.js server** for the **`client`** app, **report workers**, **`oauth-api`**, **cron sweep**) connect to PostgreSQL with **`DATABASE_URL`** using a **shared** schema (**Drizzle** in **`packages/src/drizzle-orm/`**, imported via **`@reporter/middleware`** / **`@reporter/middleware/drizzle-orm`**). The **browser** never receives `DATABASE_URL`. The tables below are the **logical** model.
 
 ---
 

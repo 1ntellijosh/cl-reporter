@@ -8,20 +8,24 @@
 # LOCAL DEV CONFIG
 # --------------------------
 HOST_DOMAIN: {{ host_domain }}
-JWT_SECRET: {{ jwt_secret }}
+JWT_SIGNING_KEY: {{ jwt_secret }}
 
 ##
 # CLOVER API CONFIG
 # --------------------------
 CLOVER_CLIENT_ID:
 CLOVER_CLIENT_SECRET:
+CLOVER_OAUTH_AUTHORIZE_BASE: https://sandbox.dev.clover.com
+# Must match Clover REST config. Use https when ingress serves TLS; for plain HTTP local dev set to http://{{ host_domain }}/start.
+CLOVER_REDIRECT_URI: http://{{ host_domain }}/start
+CLOVER_OAUTH_TOKEN_BASE: https://apisandbox.dev.clover.com
+CLOVER_TOKEN_ENCRYPTION_KEY:
 
 ##
 # DATABASE CONFIG
 # --------------------------
-DATABASE_URL: postgresql://cl_reporter:cl_reporter_dev@cl-reporter-db-srv:5432/cl_reporter
-DATABASE_USER: cl_reporter
-DATABASE_PASSWORD: cl_reporter_dev
+DATABASE_USER: db_user
+DATABASE_PASSWORD: "111111"
 
 ##
 # RABBITMQ CONFIG

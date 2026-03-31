@@ -4,7 +4,7 @@
   "private": true,
   "description": "Custom reporting app for Clover Marketplace",
   "workspaces": [
-    "packages",
+    "packages/*",
     "oauth-api",
     "client"
   ],

@@ -24,7 +24,7 @@
         fail_msg: "dev-vars.yml not found. Run 'make init' so dev-init.yml creates it first."
       when: not dev_vars_stat.stat.exists
 
-    - name: Load dev-vars.yml (get JWT_SECRET etc.)
+    - name: Load dev-vars.yml (get JWT_SIGNING_KEY etc.)
       ansible.builtin.include_vars:
         file: "{{ project_root }}/dev-vars.yml"
 
@@ -46,7 +46,7 @@
       ansible.builtin.set_fact:
         database_user: "{{ DATABASE_USER }}"
         database_password: "{{ DATABASE_PASSWORD }}"
-        database_url: "{{ DATABASE_URL }}"
+        database_url: "postgresql://{{ DATABASE_USER }}:{{ DATABASE_PASSWORD }}@cl-reporter-db-srv:5432/cl_reporter"
 
     - name: Create Kubernetes secret database-url from dev-vars.yml
       ansible.builtin.shell: >
@@ -150,25 +150,29 @@
       register: rabbitmq_url_result
       changed_when: "'configured' in rabbitmq_url_result.stdout or 'created' in rabbitmq_url_result.stdout"
 
-    - name: Set jwt_secret from dev-vars.yml
+    - name: Set jwt_signing_key from dev-vars.yml
       ansible.builtin.set_fact:
-        jwt_secret: "{{ JWT_SECRET }}"
+        jwt_signing_key: "{{ JWT_SIGNING_KEY }}"
 
-    - name: Create Kubernetes secret jwt-secret from dev-vars.yml
+    - name: Create Kubernetes secret jwt-signing-key from dev-vars.yml
       ansible.builtin.shell: >
-        kubectl create secret generic jwt-secret
-        --from-literal=JWT_KEY={{ jwt_secret }}
+        kubectl create secret generic jwt-signing-key
+        --from-literal=JWT_SIGNING_KEY={{ jwt_signing_key }}
         --dry-run=client -o yaml
         | kubectl apply -f -
       args:
         chdir: "{{ project_root }}"
-      register: jwt_secret_result
-      changed_when: "'configured' in jwt_secret_result.stdout or 'created' in jwt_secret_result.stdout"
+      register: jwt_signing_key_result
+      changed_when: "'configured' in jwt_signing_key_result.stdout or 'created' in jwt_signing_key_result.stdout"
 
-    - name: Set Clover client credentials from dev-vars.yml
+    - name: Set Clover client and API credentials from dev-vars.yml
       ansible.builtin.set_fact:
         clover_client_id: "{{ CLOVER_CLIENT_ID }}"
         clover_client_secret: "{{ CLOVER_CLIENT_SECRET }}"
+        clover_oauth_authorize_base: "{{ CLOVER_OAUTH_AUTHORIZE_BASE }}"
+        clover_redirect_uri: "{{ CLOVER_REDIRECT_URI }}"
+        clover_oauth_token_base: "{{ CLOVER_OAUTH_TOKEN_BASE }}"
+        clover_token_encryption_key: "{{ CLOVER_TOKEN_ENCRYPTION_KEY }}"
 
     - name: Create Kubernetes secret clover-client-id from dev-vars.yml
       ansible.builtin.shell: >
@@ -191,6 +195,50 @@
         chdir: "{{ project_root }}"
       register: clover_client_secret_result
       changed_when: "'configured' in clover_client_secret_result.stdout or 'created' in clover_client_secret_result.stdout"
+
+    - name: Create Kubernetes secret clover-oauth-authorize-base from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic clover-oauth-authorize-base
+        --from-literal=CLOVER_OAUTH_AUTHORIZE_BASE={{ clover_oauth_authorize_base | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: clover_oauth_authorize_base_result
+      changed_when: "'configured' in clover_oauth_authorize_base_result.stdout or 'created' in clover_oauth_authorize_base_result.stdout"
+
+    - name: Create Kubernetes secret clover-redirect-uri from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic clover-redirect-uri
+        --from-literal=CLOVER_REDIRECT_URI={{ clover_redirect_uri | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: clover_redirect_uri_result
+      changed_when: "'configured' in clover_redirect_uri_result.stdout or 'created' in clover_redirect_uri_result.stdout"
+
+    - name: Create Kubernetes secret clover-oauth-token-base from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic clover-oauth-token-base
+        --from-literal=CLOVER_OAUTH_TOKEN_BASE={{ clover_oauth_token_base | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: clover_oauth_token_base_result
+      changed_when: "'configured' in clover_oauth_token_base_result.stdout or 'created' in clover_oauth_token_base_result.stdout"
+
+    - name: Create Kubernetes secret clover-token-encryption-key from dev-vars.yml
+      ansible.builtin.shell: >
+        kubectl create secret generic clover-token-encryption-key
+        --from-literal=CLOVER_TOKEN_ENCRYPTION_KEY={{ clover_token_encryption_key | quote }}
+        --dry-run=client -o yaml
+        | kubectl apply -f -
+      args:
+        chdir: "{{ project_root }}"
+      register: clover_token_encryption_key_result
+      changed_when: "'configured' in clover_token_encryption_key_result.stdout or 'created' in clover_token_encryption_key_result.stdout"
 
     - name: Set server_api_base_url from dev-vars.yml
       ansible.builtin.set_fact:
@@ -233,7 +281,7 @@
 
     - name: Apply Postgres migrations with Drizzle
       ansible.builtin.shell: >
-        make db:migrate
+        make migrate
       args:
         chdir: "{{ project_root }}"
 

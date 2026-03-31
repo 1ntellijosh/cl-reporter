@@ -30,8 +30,10 @@
   "author": "1ntellijosh",
   "license": "ISC",
   "dependencies": {
-    "@reporter/core": "*",
+    "@reporter/common": "*",
+    "@reporter/middleware": "*",
     "@types/express": "^4.17.21",
+    "axios": "^1.13.4",
     "drizzle-orm": "^0.45.0",
     "postgres": "^3.4.7",
     "amqp-connection-manager": "^5.0.0",

@@ -13,6 +13,7 @@ How to work in this repository. **Read `docs/PRD.md` first** before implementing
 | `docs/api-column-map.md` *(when created)* | Clover column → endpoint / `expand` / JSON path (sandbox-verified) |
 | `docs/authorization-flow.md` | OAuth, **our** app session vs Clover tokens (**§6.1** — **JWT** access + Bearer, refresh cookie, TTL, logout, CSRF), **§10** OAuth hardening (redirect, `state`, scopes, trust model) |
 | `docs/clover-developer-setup.md` | **Your checklist:** Clover Developer Dashboard (redirect URIs, permissions, sandbox merchant) + **local dev** steps to run the app and wire OAuth |
+| `docs/typescript-guidelines.md` | **TypeScript** — early returns, JSDoc, file `@since` (branch), formatting around `return`, single-purpose functions, void instance methods return `this` for chaining |
 | `ops/ansible/setup-cluster.yml` | Local Kind bootstrap; calls **`make apply-postgres-db`** among other targets — see **`docs/architecture-v1.md` §8.1** |
 
 When product intent changes, update `docs/PRD.md` in the same change as behavior, or note follow-ups under **Open questions** there.
@@ -21,7 +22,7 @@ When product intent changes, update `docs/PRD.md` in the same change as behavior
 
 Custom Reports oriented toward the **Clover marketplace** (see root `README.md`).
 
-**Monorepo (npm workspaces):** Shared library is **`@reporter/core`** (`packages/` — valid scoped name; bare `@reporter` is not allowed on npm). Import as `from '@reporter/core'`. Root **`package.json`** `workspaces` lists **`packages`** and **`oauth-api`**; add **`client`** when the Next.js app exists.
+**Monorepo (npm workspaces):** Shared libraries are **`@reporter/common`** and **`@reporter/middleware`** (`packages/common/` and `packages/middleware/` respectively — valid scoped name; bare `@reporter` is not allowed on npm). `@reporter/common` assets are assets shared between all services INCLUDING `client` nextjs app. `@reporter/middleware` assets are assets shared between all services ECXCEPT `client` nextjs app. Import as `from '@reporter/common'` or `from '@reporter/middleware'`. Root **`package.json`** `workspaces` lists **`packages`** and **`oauth-api`**; add **`client`** when the Next.js app exists.
 
 ## Tech stack (web client — decided)
 
@@ -37,7 +38,7 @@ Custom Reports oriented toward the **Clover marketplace** (see root `README.md`)
 
 **Why not only the PRD?** The PRD should stay **what** merchants get; **Next.js + MUI** is **how** engineers implement — belongs here so agents do not re-debate the stack every session.
 
-**Downloads:** **Production** uses **S3** + **presigned URLs** (TTL in env, e.g. 15 minutes — document when implemented). **Local** uses app/session-authenticated file serving — see `docs/PRD.md` §8.
+**Downloads:** **Production** uses **S3** + **presigned URLs** (TTL in env, e.g. 30 minutes — document when implemented). **Local** uses app/session-authenticated file serving — see `docs/PRD.md` §8.
 
 ## Commands
 
@@ -52,10 +53,11 @@ npm test
 
 *(Adjust if the repo uses `pnpm` or `yarn`.)*
 
-**Database (Drizzle):** shared schema lives under **`packages/src/drizzle-orm/`** (exported from **`@reporter/core`** and **`@reporter/core/drizzle-orm`**); **`packages/drizzle.config.ts`** drives **`drizzle-kit generate`**; **`ops/database/migrate.ts`** runs migrations against **`ops/database/migrations`**. Apply migrations with **`make db:migrate`** (uses **`kubectl port-forward`** to in-cluster Postgres when **`DATABASE_URL`** is unset) or set **`DATABASE_URL`** and run **`npm run db:migrate -w @reporter/core`**. Generate new migrations: **`npm run db:generate -w @reporter/core`**. After you edit **`packages/src/drizzle-orm/schema.ts`**, you can run **`make schema-change-migration`** (alias: **`make scheme-change-migration`**) to **generate** and **apply** in one step.
+**Database (Drizzle):** shared schema lives under **`packages/src/drizzle-orm/`** (exported from **`@reporter/middleware`** and **`@reporter/middleware/drizzle-orm`**); **`packages/drizzle.config.ts`** drives **`drizzle-kit generate`**; **`ops/database/migrate.ts`** runs migrations against **`ops/database/migrations`**. Apply migrations with **`make migrate`** (uses **`kubectl port-forward`** to in-cluster Postgres when **`DATABASE_URL`** is unset) or set **`DATABASE_URL`** and run **`npm run migrate -w @reporter/middleware`**. Generate new migrations: **`npm run db:generate -w @reporter/middleware`**. After you edit **`packages/src/drizzle-orm/schema.ts`**, you can run **`make schema-change-migration`** (alias: **`make scheme-change-migration`**) to **generate** and **apply** in one step.
 
 ## Conventions
 
+- **TypeScript:** follow [`docs/typescript-guidelines.md`](docs/typescript-guidelines.md) for new and edited `.ts` / `.tsx`.
 - Prefer small, reviewable changes tied to a clear goal from the PRD.
 - When adding or changing **external API usage** (Clover or others), update the **Integrations** table (and environment notes) in `docs/PRD.md` or add `docs/api-contracts.md` if the team splits API detail out of the PRD.
 - Do not commit secrets; use env vars and document required names in `AGENTS.md` or `.env.example` when the stack exists.
