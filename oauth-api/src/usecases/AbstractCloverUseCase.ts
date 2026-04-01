@@ -13,6 +13,8 @@ export abstract class AbstractCloverUseCase {
    */
   constructor() {}
 
+
+
   /**
    * Determines the billing status of a merchant
    *

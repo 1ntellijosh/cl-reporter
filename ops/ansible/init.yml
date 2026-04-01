@@ -45,6 +45,22 @@
         host_domain: "{{ (host_domain_prompt.user_input | default('') | trim) or 'reporter.com' }}"
       when: not dev_vars_stat.stat.exists
 
+    - name: Generate CLOVER_TOKEN_ENCRYPTION_KEY (64 hex chars per CloverTokenEncryption spec)
+      ansible.builtin.command:
+        argv:
+          - make
+          - -s
+          - encryption-key
+        chdir: "{{ project_root }}"
+      register: clover_encryption_key_cmd
+      changed_when: false
+      when: not dev_vars_stat.stat.exists
+
+    - name: Set clover_token_encryption_key for dev-vars template
+      ansible.builtin.set_fact:
+        clover_token_encryption_key: "{{ clover_encryption_key_cmd.stdout | trim }}"
+      when: not dev_vars_stat.stat.exists
+
     - name: Generate dev-vars.yml from template
       ansible.builtin.template:
         src: "{{ project_root }}/ops/templates/dev-vars.yml-tpl"
