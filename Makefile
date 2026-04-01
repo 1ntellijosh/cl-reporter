@@ -1,6 +1,6 @@
 # Makefile for cl-reporter project
 
-.PHONY: commit push sq schema-change-migration migrate db
+.PHONY: commit push sq schema-change-migration migrate db encryption-key
 
 
 # GIT COMMANDS
@@ -38,6 +38,11 @@ sq:
 init:
 	@command -v ansible-playbook >/dev/null 2>&1 || { echo "Ansible not found. Install with: pip3 install --user ansible  or  sudo apt install ansible"; exit 127; }
 	ansible-playbook ./ops/ansible/init.yml -K
+
+# Prints one valid CLOVER_TOKEN_ENCRYPTION_KEY to stdout: 64 hex characters (= 32 bytes AES-256).
+# Matches packages/common/src/encryption/CloverTokenEncryption.ts (parseEncryptionKey).
+encryption-key:
+	@openssl rand -hex 32
 
 ##
 # LOCAL APP RUNNING COMMANDS:

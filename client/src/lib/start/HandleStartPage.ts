@@ -20,7 +20,6 @@ type StartSearchParams = {
 
 export const handleStartPage = async (params: StartSearchParams): Promise<string> => {
   const merchantId = params.merchant_id ?? params.merchantId;
-  const clientId = params.client_id;
   const code = params.code;
   const stateFromQuery = params.state;
 
@@ -34,13 +33,13 @@ export const handleStartPage = async (params: StartSearchParams): Promise<string
    * - If Clover puts `merchant_id` in the URL, it must match the JWT tenant (avoids cross-merchant confusion).
    */
   const sessionPayload = await SessionModule.getAppSessionPayload();
-  if (sessionPayload != null) return onAppSessionPresent(merchantId || '', sessionPayload);
+  if (sessionPayload != null) return await onAppSessionPresent(merchantId || '', sessionPayload);
 
   /**
-   * SCENARIO 3: Initial redirect from Clover dashboard to app
-   * - If `client_id` is present it must match our app, and `merchant_id` is required.
+   * SCENARIO 3: No `code`, no app session — cold start (dashboard launch, direct browse, or odd params).
+   * Clover: direct visits should go through OAuth, starting the flow from the beginning
    */
-  return onInitialStartLoad(clientId || '', merchantId || '');
+  return CL_ROUTES.OAUTH_CALLBACK;
 };
 
 /**
@@ -51,36 +50,23 @@ export const handleStartPage = async (params: StartSearchParams): Promise<string
  *
  * @returns The URL to redirect to after successful app session check.
  */
-function onAppSessionPresent(merchantId: string, sessionPayload: UserJwtPayload): string {
+async function onAppSessionPresent(merchantId: string, sessionPayload: UserJwtPayload): Promise<string> {
+  // SPECIAL CASE1: If merchantId param is missing, but session already exists, return to dashboard
+  if (!merchantId) return CL_ROUTES.REPORTS_DASHBOARD;
+
+  // SPECIAL CASE2: If merchantId param is present, but different from in session, switch session to new merchant
   if (merchantId && sessionPayload.cloverMerchantId !== merchantId) {
-    return CL_ROUTES.ERROR;
+    // 1. log out
+    await SessionModule.clearAppSession();
+    // 2. log case, so investigation and incident frequency/urgency
+    // TODO AGENT: Add logging here
+    // appLogger.error('App session present but merchantId mismatch', { sessionPayload, merchantId });
+    // 3. restart oauth
+    return CL_ROUTES.OAUTH_CALLBACK
   }
 
+  // NORMAL CASE: If merchant Id is the same as the session payload, return dashboard
   return CL_ROUTES.REPORTS_DASHBOARD;
-}
-
-/**
- * Handles the case where the start page is loaded with client_id and merchant_id.
- *
- * @param clientId - The client ID from the query string.
- * @param merchantId - The merchant ID from the query string.
- *
- * @returns The URL to redirect to after successful initial start load.
- */
-function onInitialStartLoad(clientId: string, merchantId: string): string {
-  const expectedClientId = process.env.CLOVER_CLIENT_ID;
-  if (clientId != null && clientId !== '') {
-    if (expectedClientId == null || clientId !== expectedClientId) {
-      return CL_ROUTES.ERROR;
-    }
-
-    if (!merchantId) {
-      return CL_ROUTES.ERROR;
-    }
-  }
-
-  // We have client_id and merchant_id, so begin Clover authorize (§3.1, §4 — sets `state` cookie, redirects to Clover).
-  return CL_ROUTES.OAUTH_CALLBACK;
 }
 
 /**
@@ -94,6 +80,7 @@ function onInitialStartLoad(clientId: string, merchantId: string): string {
 function onCodeProvided(code: string, state: string): string {
   const sParams = new URLSearchParams();
   sParams.set('code', code.trim());
+  // Should never happen, but if state is empty, complete-clover will redirect to clover-callback torestart the flow
   sParams.set('state', state);
 
   return `${CL_ROUTES.COMPLETE_CLOVER}?${sParams.toString()}`;

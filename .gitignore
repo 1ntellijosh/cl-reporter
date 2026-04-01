@@ -1,3 +1,6 @@
+# oauth-api Jest + Testcontainers (written when DATABASE_URL unset)
+oauth-api/tests/.testcontainers-pg-state.json
+
 node_modules
 **/node_modules
 dev-vars.yml
