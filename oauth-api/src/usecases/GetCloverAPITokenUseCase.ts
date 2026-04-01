@@ -5,7 +5,6 @@
  */
 
 import { GetValidCloverTokenResponse, CloverBillingInfoResponse } from '@reporter/common';
-import { MerchantsRepository } from '@reporter/middleware';
 import { ServerError } from '@reporter/common';
 import { CloverAPIs } from '../lib/http/CloverAPIs';
 import { AbstractCloverUseCase } from './AbstractCloverUseCase';

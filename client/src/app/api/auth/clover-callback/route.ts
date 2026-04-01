@@ -6,20 +6,24 @@
  * @since app-login--JP
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { OAUTH_STATE_COOKIE_NAME } from '@reporter/common';
+import { CL_ROUTES } from '../../../../lib/enums/ClientRoutes';
 
 /**
  * Builds the Clover authorize URL and returns a redirect response with `state` stored in a cookie.
  */
-export function GET(): NextResponse {
+export function GET(request: NextRequest): NextResponse {
   const clientId = process.env.CLOVER_CLIENT_ID;
   const authorizeBase = process.env.CLOVER_OAUTH_AUTHORIZE_BASE;
   const redirectUri = process.env.CLOVER_REDIRECT_URI;
 
   if (!clientId || !authorizeBase || !redirectUri) {
-    return NextResponse.json({ error: 'OAuth is not configured' }, { status: 503 });
+    // TODO AGENT: Add logging here
+    // appLogger.error('OAuth env vars are not configured (CLOVER_CLIENT_ID, CLOVER_OAUTH_AUTHORIZE_BASE, CLOVER_REDIRECT_URI)');
+    return NextResponse.redirect(new URL(CL_ROUTES.ERROR, request.url));
   }
 
   const state = crypto.randomUUID();
@@ -43,4 +47,3 @@ export function GET(): NextResponse {
 
   return response;
 }
-

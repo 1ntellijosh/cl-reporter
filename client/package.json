@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "jest",
+    "test:ci": "jest --ci"
   },
   "repository": {
     "type": "git",
@@ -31,9 +33,12 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.2",
+    "jest": "^30.2.0",
     "sass": "^1.77.0",
     "typescript": "^5.7.3"
   }

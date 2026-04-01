@@ -9,5 +9,5 @@ import { SessionModule } from '../../../../lib/sessions/SessionModule';
 export async function POST(request: NextRequest) {
   await SessionModule.clearAppSession();
 
-  return NextResponse.json({ message: 'Logged out successfully' });
+  return NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
 }

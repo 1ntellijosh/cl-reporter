@@ -24,20 +24,5 @@
 //   };
 // });
 
-const SETUP_TIMEOUT_MS = 30_000;
-
-// Create DB once; clear before each test (no per-test server creation).
-jest.setTimeout(15_000); // Hooks and tests in CI may be slow; 5s default can cause intermittent failures.
-
-beforeAll(async () => {
-  process.env.JWT_SIGNING_KEY = 'test-jwt-signing-key';
-
-}, SETUP_TIMEOUT_MS);
-
-beforeEach(async () => {
-  // Will need to clear the database before each test
-});
-
-afterAll(async () => {
-  // Will need to close and stop the database connection before each test
-}, SETUP_TIMEOUT_MS);
+// Unit / package tests: no database.
+// Integration tests use `jest.integration.config.cjs` + `tests/JestSetup.integration.ts` and require `DATABASE_URL`.
