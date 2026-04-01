@@ -8,15 +8,15 @@ FROM node:alpine AS builder
 
 WORKDIR /app
 
-# Copy workspace package (client only needs @reporter/core)
-COPY packages/package.json ./packages/
-COPY packages/dist ./packages/dist
+# Copy workspace package (client only needs @reporter/common)
+COPY packages/common/package.json ./packages/common/
+COPY packages/common/dist ./packages/common/dist
 
-# Copy client app and point @reporter/core to local package
+# Copy client app and point @reporter/common to local package
 COPY client/ .
-RUN sed 's|"@reporter/core": "\*"|"@reporter/core": "file:./packages"|g' ./package.json > ./package.json.tmp && mv ./package.json.tmp ./package.json
+RUN sed 's|"@reporter/common": "\*"|"@reporter/common": "file:./packages/common"|g' ./package.json > ./package.json.tmp && mv ./package.json.tmp ./package.json
 
-# Install deps and build (next.config resolves @reporter/core via node_modules in container)
+# Install deps and build (next.config resolves @reporter/common via node_modules in container)
 RUN npm install && npm run build
 
 # Production runner: only need .next and node_modules

@@ -8,7 +8,7 @@
   hosts: localhost
   vars_prompt:
     - name: jwt_secret
-      prompt: "JWT secret key (used for jwt-secret in cluster)"
+      prompt: "JWT signing key (stored as JWT_SIGNING_KEY in dev-vars.yml and jwt-secret in cluster)"
       private: true
 
     - name: rabbitmq_password

@@ -8,15 +8,21 @@ FROM node:alpine
 
 WORKDIR /app
 
-# Copy workspace packages (built dist folders and package.json files)
-COPY packages/package.json ./packages/
-COPY packages/dist ./packages/dist
+# Workspace packages: each under packages/<name>/ (must not share one ./packages/dist or npm cannot link both).
+COPY packages/common/package.json ./packages/common/package.json
+COPY packages/common/dist ./packages/common/dist
+COPY packages/middleware/package.json ./packages/middleware/package.json
+COPY packages/middleware/dist ./packages/middleware/dist
 
-# Copy oauth-api package.json and modify it to use file: protocol for local packages
+# Middleware lists @reporter/common — point at sibling folder (no public registry in image).
+RUN sed 's|"@reporter/common": "\*"|"@reporter/common": "file:../common"|g' packages/middleware/package.json > packages/middleware/package.json.tmp \
+  && mv packages/middleware/package.json.tmp packages/middleware/package.json
+
+# Copy oauth-api package.json and wire workspace deps to those local folders
 COPY oauth-api/package.json ./package.json.tmp
-RUN sed 's|"@reporter/core": "\*"|"@reporter/core": "file:./packages"|g' ./package.json.tmp > ./package.json && rm ./package.json.tmp
+RUN sed 's|"@reporter/common": "\*"|"@reporter/common": "file:./packages/common"|g; s|"@reporter/middleware": "\*"|"@reporter/middleware": "file:./packages/middleware"|g' ./package.json.tmp > ./package.json && rm ./package.json.tmp
 
-# Install oauth-api dependencies (will install local packages via file: protocol)
+# Install oauth-api dependencies (local file: packages for @reporter/*)
 RUN npm install --omit=dev
 
 # Copy oauth-api source code and config files

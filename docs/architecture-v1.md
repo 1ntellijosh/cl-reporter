@@ -11,7 +11,7 @@
 | Principle | Application |
 |-------------|-------------|
 | **Kind is the reference local environment** | All **main** v1 capabilities run as separate **Deployments** or **StatefulSets** in a **Kind** cluster, namespace **`cl-reporter`**, each with a clear responsibility. |
-| **TypeScript end-to-end (Node)** | **Next.js (`client`)**, **Express (`oauth-api`)**, **report workers**, and **cron sweep** share **one** Drizzle schema (**`packages/src/drizzle-orm/`** in **`@reporter/core`**) and **direct** PostgreSQL access via **`DATABASE_URL`** — no separate HTTP database gateway. |
+| **TypeScript end-to-end (Node)** | **Next.js (`client`)**, **Express (`oauth-api`)**, **report workers**, and **cron sweep** share **one** Drizzle schema (**`packages/src/drizzle-orm/`** in **`@reporter/middleware`**) and **direct** PostgreSQL access via **`DATABASE_URL`** — no separate HTTP database gateway. |
 | **Internal HTTP with axios** | **`client`** and **`worker-report`** call **`oauth-api`** over ClusterIP for Clover OAuth/token operations (and anything you centralize there). **Data** reads/writes use **SQL** (Drizzle) in-process, not a second hop. The **browser** never talks to **`oauth-api`** or Postgres directly. |
 | **PRD boundaries** | **RabbitMQ** for report + OAuth refresh jobs; **PostgreSQL** as system of record; **local PV** for report files in Kind; **S3 + presigned URLs** in production; OAuth/token rules per PRD §3. |
 
@@ -31,7 +31,7 @@ Each **major function** maps to its **own** workload; StatefulSets for Postgres 
 | **6** | **OAuth service (`oauth-api`)** | Deployment **`replicas: 1`** (v1) | **Express + TypeScript** — Clover **`/oauth/v2/token`**, **`/oauth/v2/refresh`**; **Drizzle** writes encrypted tokens / **`needs_reauth`** / **`audit_events`**. Internal HTTP for **`client`** (callback handoff) and **workers** (“ensure token for merchant”). AMQP consumer for **`oauth.refresh.v1`** may run **here** or as a thin **worker-oauth** — **one** refresh in flight per merchant (PRD §3). |
 | **7** | **Token sweep (`cron-token-sweep`)** | **CronJob** | **`DATABASE_URL`** + **`RABBITMQ_URL`**: query merchants with **`refresh_token_expiration` ≤ now + 30 days**; publish **`oauth.refresh.v1`** only (no Clover call in cron). Image can share **`worker-report`** base or a minimal Node image. |
 
-**Shared packages:** **`@reporter/core`** (`packages/`) includes **Drizzle** tables under **`src/drizzle-orm/`**; generated migration SQL under **`ops/database/migrations`**. **`client`**, **`oauth-api`**, **`worker-report`**, **cron** import **`@reporter/core`** / **`@reporter/core/drizzle-orm`**. Planned: `packages/clover-client`, `packages/crypto`.
+**Shared packages:** **`@reporter/middleware`** (`packages/middleware`) includes **Drizzle** tables under **`src/drizzle-orm/`**; generated migration SQL under **`ops/database/migrations`**. **`client`**, **`oauth-api`**, **`worker-report`**, **cron** import **`@reporter/middleware`** / **`@reporter/middleware/drizzle-orm`**. Planned: `packages/clover-client`, `packages/crypto`.
 
 **Repo vs K8s names:** The logical workload is **`client`** (Next.js merchant app). Your **folder** can be **`client/`**; **Kubernetes** `Deployment` / `Service` names are often also **`client`** or **`cl-reporter-client`** — keep Service DNS aligned with **`OAUTH_API_URL`** / Ingress.
 
@@ -51,7 +51,7 @@ Each **major function** maps to its **own** workload; StatefulSets for Postgres 
 | Layer | Choice | Notes |
 |-------|--------|--------|
 | **Client** | **Next.js**, **MUI**, **axios** → **`oauth-api`** | **Drizzle** + **`DATABASE_URL`** on the server only. |
-| **Data layer** | **Drizzle ORM** + **drizzle-kit** | Schema in **@reporter/core** (**packages/src/drizzle-orm/**); **packages/drizzle.config.ts**; migrations in CI or init Job. |
+| **Data layer** | **Drizzle ORM** + **drizzle-kit** | Schema in **@reporter/middleware** (**packages/src/drizzle-orm/**); **packages/drizzle.config.ts**; migrations in CI or init Job. |
 | **oauth-api** | **Express**, **axios**, **Drizzle** | Same schema as **`client`** / workers. |
 | **worker-report** | **amqplib**, **axios** (Clover), **exceljs**, **csv-stringify**, **Drizzle** | Long-lived consumer + **pg** pooling. |
 | **HTTP (Clover)** | **axios** | `packages/clover-client`. |
@@ -86,7 +86,7 @@ Each **major function** maps to its **own** workload; StatefulSets for Postgres 
 
 | Image | Contents |
 |-------|----------|
-| **`cl-reporter-web`** | Next.js **standalone** + **`@reporter/core`** (Drizzle schema) |
+| **`cl-reporter-web`** | Next.js **standalone** |
 | **`cl-reporter-oauth-api`** | Express + consumer optional |
 | **`cl-reporter-worker-report`** | `worker-report` entrypoint |
 | **`cl-reporter-cron`** *(optional)* | Sweep binary or same image with `CMD` |
@@ -98,7 +98,8 @@ Each **major function** maps to its **own** workload; StatefulSets for Postgres 
 | Variable | Consumers | Purpose |
 |----------|-----------|---------|
 | **`DATABASE_URL`** | **`client`** (Next.js server), **`worker-report`**, **`oauth-api`**, **cron** | **PostgreSQL** — trusted services only; **never** in browser bundle. |
-| **`OAUTH_API_URL`** | **`client`**, **`worker-report`** | Internal **`oauth-api`** base URL. |
+| **`OAUTH_API_URL`** | **`client`**, **`worker-report`** | Internal **`oauth-api`** base URL (optional if you route via ingress instead). |
+| **`SERVER_API_BASE_URL`** | **`client`** (Next.js server, `@reporter/common` **`RequestMaker`**) | Base URL prepended to internal paths such as **`/api/oauth/...`**. **Ingress must forward `/api/oauth/*` to the `oauth-api` Service** (see **`ops/k8s/overlays/dev/ingress-srv.yml`**); otherwise SSR calls hit **`client`** only and return **404**. |
 | **`RABBITMQ_URL`** | **`client`** (publish), **`worker-report`**, **`oauth-api`** (if publishing), **cron** | AMQP |
 | **`CLOVER_*`**, **`JWT_*`**, **`CLOVER_TOKEN_ENCRYPTION_KEY`** | **`oauth-api`**, **`client`** (subset) | Per PRD / [`authorization-flow.md`](authorization-flow.md) |
 
@@ -114,8 +115,8 @@ Each **major function** maps to its **own** workload; StatefulSets for Postgres 
 |-------|------------|
 | **Postgres image in cluster** | **Official `postgres:16`** in **`ops/k8s/base/statefulsets/postgres-db.yml`**. **`make apply-postgres-db`** applies **Kind** `StorageClass` (`ops/k8s/overlays/dev/storageclass-local.yml`) then the StatefulSet. **`ops/ansible/setup-cluster.yml`** runs **`apply-postgres-db`** right after the local-path provisioner (so the StorageClass exists before the StatefulSet), then **`make wait-postgres-db`** immediately before **`make apply-deployments`** so Postgres is ready before app pods start. |
 | **Custom `ops/docker/db/Dockerfile`** | **Optional** only (e.g. add `init-db.sql` to `/docker-entrypoint-initdb.d/`). Runs **once** on first empty volume — **not** a substitute for ongoing schema changes. If unused, **do not** build it in Skaffold; keep the StatefulSet on **`postgres:16`**. |
-| **Tables, indexes, seeds** | **Drizzle Kit** migrations: generated SQL under **`ops/database/migrations`**, schema in **`packages/src/drizzle-orm/`**, **`packages/drizzle.config.ts`**, migrate runner **`ops/database/migrate.ts`**. Run **`make db:migrate`** (or **`DATABASE_URL=... npm run db:migrate -w @reporter/core`**) **after** Postgres is reachable — same flow in CI/prod with a reachable **`DATABASE_URL`**. **Avoid** maintaining parallel hand-written SQL in Ansible that duplicates Drizzle. |
-| **Ansible** | **`ops/ansible/setup-cluster.yml`** orchestrates local Kind prep; it includes **`make apply-postgres-db`** to apply the Postgres **StatefulSet/Services**, then **`make wait-postgres-db`**, then **`make db:migrate`**, then app deployments. **`make db:migrate`** port-forwards to **`cl-reporter-db-srv`** when **`DATABASE_URL`** is unset (local bootstrap). |
+| **Tables, indexes, seeds** | **Drizzle Kit** migrations: generated SQL under **`ops/database/migrations`**, schema in **`packages/src/drizzle-orm/`**, **`packages/drizzle.config.ts`**, migrate runner **`ops/database/migrate.ts`**. Run **`make migrate`** (or **`DATABASE_URL=... npm run db:migrate -w @reporter/middleware`**) **after** Postgres is reachable — same flow in CI/prod with a reachable **`DATABASE_URL`**. **Avoid** maintaining parallel hand-written SQL in Ansible that duplicates Drizzle. |
+| **Ansible** | **`ops/ansible/setup-cluster.yml`** orchestrates local Kind prep; it includes **`make apply-postgres-db`** to apply the Postgres **StatefulSet/Services**, then **`make wait-postgres-db`**, then **`make migrate`**, then app deployments. **`make migrate`** port-forwards to **`cl-reporter-db-srv`** when **`DATABASE_URL`** is unset (local bootstrap). |
 
 **PRD:** High-level pointer only — [`PRD.md`](PRD.md) §10.
 
@@ -140,8 +141,8 @@ Structured logs to **stdout**; **`audit_events`** in Postgres. No mandatory APM 
 | **2026-03-28** | Kind topology: **`client`**, PV, Postgres, RabbitMQ, workers, **`oauth-api`**. |
 | **2026-03-28** | **Removed `db-api`:** **`client`**, **`worker-report`**, **`oauth-api`**, and **cron** use **Drizzle + `DATABASE_URL`** directly to Postgres; **`oauth-api`** remains for Clover OAuth/token HTTP surface. |
 | **2026-03-28** | Renamed workload **`web`** → **`client`** (aligns with repo folder **`client/`**). |
-| **2026-03-29** | §8.1: **`make db:migrate`**, Drizzle schema in **`@reporter/core`**, migrations in **`ops/database/migrations`**. |
+| **2026-03-29** | §8.1: **`make migrate`**, Drizzle schema in **`@reporter/middleware`**, migrations in **`ops/database/migrations`**. |
 | **2026-03-29** | Drizzle package moved from **`packages/db`** to **`ops/database/drizzle-orm`**; **`packages/`** reserved for runtime shared libraries only. |
-| **2026-03-30** | Drizzle schema consolidated into **`packages/src/drizzle-orm/`** (**@reporter/core**); **`ops/database/drizzle-orm`** removed; migrate script **`ops/database/migrate.ts`**. |
+| **2026-03-30** | Drizzle schema consolidated into **`packages/src/drizzle-orm/`** (**@reporter/middleware**); **`ops/database/drizzle-orm`** removed; migrate script **`ops/database/migrate.ts`**. |
 | **2026-03-30** | §8.1: **Stock `postgres:16` + Drizzle migrations**; Ansible **`apply-postgres-db`**; optional custom DB Dockerfile; PRD §10 pointer. |
 | **2026-03-30** | §8.1: **`make wait-postgres-db`** before app **`apply-deployments`**; **`apply-postgres-db`** moved earlier in **`setup-cluster.yml`** (after local-path provisioner). |

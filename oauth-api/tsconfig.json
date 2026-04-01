@@ -28,9 +28,12 @@
     "module": "commonjs",                                /* Specify what module code is generated. */
     // "rootDir": "./",                                  /* Specify the root folder within your source files. */
     // "moduleResolution": "node10",                     /* Specify how TypeScript looks up a file from a given module specifier. */
-    "baseUrl": ".",                                      /* Map @reporter/core/drizzle-orm for TS (package.json exports) */
+    "baseUrl": ".",                                      /* Map @reporter/middleware/drizzle-orm for TS (package.json exports) */
     "paths": {
-      "@reporter/core/drizzle-orm": ["../node_modules/@reporter/core/dist/drizzle-orm/index.d.ts"]
+      "@reporter/middleware/drizzle-orm": [
+        "./node_modules/@reporter/middleware/dist/drizzle-orm/index.d.ts",
+        "../node_modules/@reporter/middleware/dist/drizzle-orm/index.d.ts"
+      ]
     },
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */

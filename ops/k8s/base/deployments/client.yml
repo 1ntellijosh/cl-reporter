@@ -29,6 +29,26 @@ spec:
                 secretKeyRef:
                   name: server-api-base-url
                   key: SERVER_API_BASE_URL
+            - name: JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-signing-key
+                  key: JWT_SIGNING_KEY
+            - name: CLOVER_OAUTH_AUTHORIZE_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: clover-oauth-authorize-base
+                  key: CLOVER_OAUTH_AUTHORIZE_BASE
+            - name: CLOVER_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: clover-client-id
+                  key: CLOVER_CLIENT_ID
+            - name: CLOVER_REDIRECT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: clover-redirect-uri
+                  key: CLOVER_REDIRECT_URI
 
 ---
 

@@ -18,7 +18,7 @@ build:
         dependencies:
           paths:
             - oauth-api/**/*
-            - packages/dist/**/*
+            - packages/*/dist/**/*
       sync:
         manual:
           - src: 'oauth-api/src/**/*.ts'
@@ -34,7 +34,7 @@ build:
         dependencies:
           paths:
             - client/**/*
-            - packages/dist/**/*
+            - packages/common/dist/**/*
       sync:
         manual:
           - src: 'client/**/*'

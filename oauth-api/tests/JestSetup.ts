@@ -4,8 +4,8 @@
  * @since app-skaffold--JP
  */
 
-// jest.mock('@reporter/core', () => {
-//   const actual = jest.requireActual('@reporter/core');
+// jest.mock('@reporter/middleware', () => {
+//   const actual = jest.requireActual('@reporter/middleware');
   
 //   // Mock EventPublisher as a class with prototype method so jest.spyOn works
 //   class MockEventPublisher {
@@ -30,7 +30,7 @@ const SETUP_TIMEOUT_MS = 30_000;
 jest.setTimeout(15_000); // Hooks and tests in CI may be slow; 5s default can cause intermittent failures.
 
 beforeAll(async () => {
-  process.env.JWT_KEY = 'test-jwt-key';
+  process.env.JWT_SIGNING_KEY = 'test-jwt-signing-key';
 
 }, SETUP_TIMEOUT_MS);
 

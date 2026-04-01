@@ -38,6 +38,26 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-url
                   key: RABBITMQ_URL
+            - name: CLOVER_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: clover-client-id
+                  key: CLOVER_CLIENT_ID
+            - name: CLOVER_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clover-client-secret
+                  key: CLOVER_CLIENT_SECRET
+            - name: CLOVER_OAUTH_TOKEN_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: clover-oauth-token-base
+                  key: CLOVER_OAUTH_TOKEN_BASE
+            - name: CLOVER_TOKEN_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clover-token-encryption-key
+                  key: CLOVER_TOKEN_ENCRYPTION_KEY
 
 ---
 

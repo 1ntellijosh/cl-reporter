@@ -16,13 +16,13 @@ spec:
     - host: reporter.com
       http:
         paths:
-          # - path: /api/reports/[^/]+
-          #   pathType: ImplementationSpecific
-          #   backend:
-          #     service:
-          #       name: report-worker-srv
-          #       port:
-          #         number: 3000
+          - path: /api/oauth/[^/]+
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: oauth-api-srv
+                port:
+                  number: 3000
           - path: /
             pathType: Prefix
             backend:
