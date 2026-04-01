@@ -13,10 +13,11 @@ import { useSubscription } from '../state/SubscriptionContext';
 
 export default function HomePageContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   const router = useRouter();
-  const { billingStatus } = useSubscription();
+  const { billingStatus, clear } = useSubscription();
 
   const onLogoutClick = async () => {
     await RequestMaker.post('/api/auth/logout', []);
+    await clear();
     router.push('/');
     router.refresh();
   };
