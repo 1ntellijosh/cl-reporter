@@ -43,14 +43,42 @@ export abstract class AbstractCloverUseCase {
   }
 
   /**
+   * Retrieves the access token data for a given merchant
+   *
+   * @param cloverMerchantId
+   *
+   * @returns {Promise<{ accessToken: string, accessTokenExpiration: number }>}
+   */
+  protected async retrieveAccessTokenData(cloverMerchantId: string): Promise<{ accessToken: string, accessTokenExpiration: number }> {
+    // Get the access token for the merchant
+    let accessTokenResult = await MerchantsRepository.getAccessToken(cloverMerchantId) as { accessToken: string, accessTokenExpiration: number } | null;
+
+    // If the access token is expired, refresh it
+    if (accessTokenResult && !this.tokenIsExpired(accessTokenResult.accessTokenExpiration)) {
+      return {
+        accessToken: accessTokenResult.accessToken,
+        accessTokenExpiration: accessTokenResult.accessTokenExpiration,
+      };
+    }
+
+    const refreshTokenResult = await MerchantsRepository.getRefreshToken(cloverMerchantId) as { refreshToken: string, refreshTokenExpiration: number } | null;
+    
+    if (!refreshTokenResult) {
+      throw new Error('No refresh token found for merchant');
+    }
+    
+    return await this.refreshAccessToken(cloverMerchantId, refreshTokenResult.refreshToken);
+  }
+
+  /**
    * Refreshes an access token
    *
    * @param cloverMerchantId
    * @param refreshToken
    *
-   * @returns New access_token string for immediate use (e.g. billing_info).
+   * @returns {Promise<{ accessToken: string, accessTokenExpiration: number }>}
    */
-  protected async refreshAccessToken(cloverMerchantId: string, refreshToken: string): Promise<string> {
+  protected async refreshAccessToken(cloverMerchantId: string, refreshToken: string): Promise<{ accessToken: string, accessTokenExpiration: number }> {
     await MerchantsRepository.setNeedsReauth(cloverMerchantId);
 
     const url = `${process.env.CLOVER_OAUTH_TOKEN_BASE}/oauth/v2/refresh`;
@@ -68,6 +96,9 @@ export abstract class AbstractCloverUseCase {
       response.access_token_expiration,
     );
 
-    return response.access_token;
+    return {
+      accessToken: response.access_token,
+      accessTokenExpiration: response.access_token_expiration,
+    };
   }
 }
