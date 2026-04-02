@@ -10,7 +10,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { getTheme, type ThemeMode } from './theme';
 import { LS_KEYS, LocalStore } from '../lib/localstorage/LocalStore';
-import type { BillingStatus } from '../lib/billing/BillingStatus';
+import { type BillingStatus } from '@reporter/common';
 import { SubscriptionProvider } from '../state/SubscriptionContext';
 
 const queryClient = new QueryClient();

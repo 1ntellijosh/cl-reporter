@@ -22,7 +22,7 @@ export function GET(request: NextRequest): NextResponse {
 
   if (!clientId || !authorizeBase || !redirectUri) {
     // TODO AGENT: Add logging here
-    // appLogger.error('OAuth env vars are not configured (CLOVER_CLIENT_ID, CLOVER_OAUTH_AUTHORIZE_BASE, CLOVER_REDIRECT_URI)');
+    // appLogger.error('One or more OAuth env vars are not configured (client ID, authorize base, or redirect URI)');
     return NextResponse.redirect(new URL(CL_ROUTES.ERROR, request.url));
   }
 
