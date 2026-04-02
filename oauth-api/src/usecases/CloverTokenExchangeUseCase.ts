@@ -67,8 +67,8 @@ export class CloverTokenExchangeUseCase extends AbstractCloverUseCase {
       return { cloverMerchantId, billingStatus };
     } catch (error) {
       // TODO AGENT: Add logging here
-      // appLogger.error('Error getting Clover billing info:', error);
-      console.error('Error exchanging Clover code:', error);
+      // appLogger.error('CloverTokenExchangeUseCase: exchange or session failed', error);
+      console.error('Error exchanging Clover code:');
       throw new ServerError('Error logging in with Clover. Please try again later.');
     }
   }

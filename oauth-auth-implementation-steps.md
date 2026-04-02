@@ -16,11 +16,7 @@ This document is an ordered implementation checklist for Clover v2 OAuth + our a
 
 2. **Logging:** never log Clover tokens or JWTs; log merchant id + event types only.
 
-3. **Update** `AGENTS.md` or `.env.example` with final env var names.
-
-4. **Align** `docs/authorization-flow.md` only if behavior intentionally diverges (per repo rules).
-
-5. **App Market billing (paid / trial / free tier):** OAuth proves API access; subscription state is separate. Plan pricing and post-OAuth **entitlement** checks using Clover’s billing docs — [Monetize your apps](https://docs.clover.com/dev/docs/monetizing-your-apps) (subscription vs metered, trials, handling lapsed merchants) and the Platform API **Get merchant app billing information** (`GET /v3/apps/{appId}/merchants/{mId}/billing_info`). Align with `docs/PRD.md` commercial model when you wire gating.
+3. **App Market billing (paid / trial / free tier):** OAuth proves API access; subscription state is separate. Plan pricing and post-OAuth **entitlement** checks using Clover’s billing docs — [Monetize your apps](https://docs.clover.com/dev/docs/monetizing-your-apps) (subscription vs metered, trials, handling lapsed merchants) and the Platform API **Get merchant app billing information** (`GET /v3/apps/{appId}/merchants/{mId}/billing_info`). Align with `docs/PRD.md` commercial model when you wire gating.
 
 ---
 

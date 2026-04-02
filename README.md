@@ -12,25 +12,24 @@ When a merchant opens the app from the **Clover Merchant Dashboard**, our **serv
 sequenceDiagram
     participant B as Merchant browser
     participant CloverUI as Clover OAuth UI
-    participant S as Nextjs server
+    participant S as Our App (client, oauth-api)
     participant T as Clover token API
 
     B->>CloverUI: Open Merchant Dashboard, click our app
     CloverUI->>B: Redirect to Site URL or Alternate Launch Path
-    B->>S: GET entry page, no our-app session
-    Note over S: Generate random state and store it server-side
-    Note over S: e.g. HttpOnly cookie or server session
+    B->>S: GET entry page (/start in client)
+    Note over S: No session found in our app -> client /clover-callback: Generate random state and store it in an HttpOnly cookie
     S->>B: 302 to Clover oauth v2 authorize with state
     B->>CloverUI: GET authorize, state in query string
     CloverUI->>B: Sign in or consent if needed
     CloverUI->>B: 302 to our callback with code and state
-    B->>S: GET callback with code and state
-    Note over S: Reject if state does not match stored value
+    B->>S: GET callback with code and state (/complete-clover in client)
+    Note over S: Reject if state does not match stored cookie value OR -> oauth-api /exchange-clover-code
     S->>T: POST oauth v2 token with code and client_secret
     Note over S,T: client_secret only here, never in browser
     T->>S: access_token and refresh_token
-    S->>S: Persist Clover tokens, mint our JWT
-    S->>B: Redirect to app UI, logged in
+    S->>S: oauth-api /exchange-clover-code: Persist Clover tokens -> client /complete-clover: mint our JWT
+    S->>B: Redirect to app UI (client /dashboard) logged in
 ```
 </think>
 
