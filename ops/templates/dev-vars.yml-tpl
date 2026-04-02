@@ -19,7 +19,7 @@ CLOVER_OAUTH_AUTHORIZE_BASE: https://sandbox.dev.clover.com
 # Must match Clover REST config. Use https when ingress serves TLS; for plain HTTP local dev set to http://{{ host_domain }}/start.
 CLOVER_REDIRECT_URI: http://{{ host_domain }}/start
 CLOVER_OAUTH_TOKEN_BASE: https://apisandbox.dev.clover.com
-CLOVER_TOKEN_ENCRYPTION_KEY:
+CLOVER_TOKEN_ENCRYPTION_KEY: {{ clover_token_encryption_key }}
 
 ##
 # DATABASE CONFIG

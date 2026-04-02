@@ -149,7 +149,8 @@ export class RequestMaker {
    * @throws {AbstractRequestError}
    */
   static throwFailedCallError = async (err: any): Promise<never> => {
-    console.log('!!!! ERROR: ', err);
+    // TODO AGENT: Add logging here
+    // appLogger.error('Error in RequestMaker.throwFailedCallError: ', err);
     if (err.response) {
       /**
        * The request was made and the server responded with a status code

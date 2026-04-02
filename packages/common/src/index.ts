@@ -36,3 +36,4 @@ export { ServerError } from './errors/ServerError';
 export { APIError } from './errors/APIError';
 export { RequestValidationError } from './errors/RequestValidationError';
 export { UnAuthorizedError } from './errors/UnAuthorizedError';
+export { NotFoundError } from './errors/NotFoundError';
