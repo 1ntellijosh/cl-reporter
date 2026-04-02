@@ -18,18 +18,18 @@ sequenceDiagram
     B->>CloverUI: Open Merchant Dashboard, click our app
     CloverUI->>B: Redirect to Site URL or Alternate Launch Path
     B->>S: GET entry page (/start in client)
-    Note over S: client /start: No session found in our app -> client /clover-callback: Generate random state and store it in an HttpOnly cookie (`cl_reporter_oauth_state`)
+    Note over S: No session found in our app -> client /clover-callback: Generate random state and store it in an HttpOnly cookie (`cl_reporter_oauth_state`)
     S->>B: 302 to Clover oauth v2 authorize with state
     B->>CloverUI: GET authorize, state in query string
     CloverUI->>B: Sign in or consent if needed
     CloverUI->>B: 302 to our callback with code and state
     B->>S: GET callback with code and state (/complete-clover in client)
-    Note over S: client /complete-clover: Reject if state does not match stored value OR send to send code to oauth-api /exchange-clover-code
-    S->>T: oauth-api /exchange-clover-code: POST oauth v2 token with code and client_secret
+    Note over S: Reject if state does not match stored cookie value OR -> oauth-api /exchange-clover-code
+    S->>T: POST oauth v2 token with code and client_secret
     Note over S,T: client_secret only here, never in browser
-    T->>S: access_token and refresh_token
-    S->>S: oauth-api /exchange-clover-code: Persist Clover tokens -> client /complete-clover: mint our JWT
-    S->>B: client /complete-clover: Redirect to app UI (client /dashboard) logged in
+    T->>S: access_token and refresh_token (oauth-api /exchange-clover-code)
+    S->>S: Persist Clover tokens -> client /complete-clover: mint our JWT
+    S->>B: Redirect to app UI (client /dashboard) logged in
 ```
 </think>
 
