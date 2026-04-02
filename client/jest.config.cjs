@@ -12,12 +12,12 @@ const createJestConfig = nextJest({ dir: './' });
 const customJestConfig = {
   coverageProvider: 'v8',
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/src/tests/**/*.test.ts', '<rootDir>/src/**/*.test.ts'],
-  setupFilesAfterEnv: ['<rootDir>/src/tests/JestSetup.ts'],
+  testMatch: ['<rootDir>/tests/**/*.test.ts', '<rootDir>/tests/**/*.test.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/JestSetup.ts'],
   modulePathIgnorePatterns: ['<rootDir>/.next/'],
   /** Override Next’s `next/headers` stub so unit tests can assert on `cookies().set`. */
   moduleNameMapper: {
-    '^next/headers$': '<rootDir>/src/tests/mocks/next-headers.ts',
+    '^next/headers$': '<rootDir>/tests/mocks/next-headers.ts',
   },
 };
 
