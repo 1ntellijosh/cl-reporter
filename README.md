@@ -27,8 +27,8 @@ sequenceDiagram
     Note over S: Reject if state does not match stored cookie value OR -> oauth-api /exchange-clover-code
     S->>T: POST oauth v2 token with code and client_secret
     Note over S,T: client_secret only here, never in browser
-    T->>S: access_token and refresh_token (oauth-api /exchange-clover-code)
-    S->>S: Persist Clover tokens -> client /complete-clover: mint our JWT
+    T->>S: access_token and refresh_token
+    S->>S: oauth-api /exchange-clover-code: Persist Clover tokens -> client /complete-clover: mint our JWT
     S->>B: Redirect to app UI (client /dashboard) logged in
 ```
 </think>
