@@ -6,8 +6,8 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { OAUTH_STATE_COOKIE_NAME } from '@reporter/common';
 import { NextRequest } from 'next/server';
-import { GET } from '../../../../app/api/auth/clover-callback/route';
-import { CL_ROUTES } from '../../../../lib/enums/ClientRoutes';
+import { GET } from '../../../../src/app/api/auth/clover-callback/route';
+import { CL_ROUTES } from '../../../../src/lib/enums/ClientRoutes';
 import { stashOAuthEnv, restoreOAuthEnv, setValidOAuthEnv } from '../../../JestSetup';
 import { OAUTH_ENV_KEYS } from '../../../JestSetup';
 

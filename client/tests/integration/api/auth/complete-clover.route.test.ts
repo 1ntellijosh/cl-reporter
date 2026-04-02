@@ -6,9 +6,9 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { API, OAUTH_STATE_COOKIE_NAME } from '@reporter/common';
 import { NextRequest } from 'next/server';
-import { GET as completeCloverGET } from '../../../../app/api/auth/complete-clover/route';
-import { CL_ROUTES } from '../../../../lib/enums/ClientRoutes';
-import { SessionModule } from '../../../../lib/sessions/SessionModule';
+import { GET as completeCloverGET } from '../../../../src/app/api/auth/complete-clover/route';
+import { CL_ROUTES } from '../../../../src/lib/enums/ClientRoutes';
+import { SessionModule } from '../../../../src/lib/sessions/SessionModule';
 import { cookieStoreMocks } from '../../../mocks/next-headers';
 import { stashOAuthEnv, restoreOAuthEnv, setValidOAuthEnv } from '../../../JestSetup';
 

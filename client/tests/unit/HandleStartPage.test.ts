@@ -6,9 +6,9 @@
  */
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { UserJwtPayload } from '@reporter/common';
-import { handleStartPage } from '../../lib/start/HandleStartPage';
-import { CL_ROUTES } from '../../lib/enums/ClientRoutes';
-import { SessionModule } from '../../lib/sessions/SessionModule';
+import { handleStartPage } from '../../src/lib/start/HandleStartPage';
+import { CL_ROUTES } from '../../src/lib/enums/ClientRoutes';
+import { SessionModule } from '../../src/lib/sessions/SessionModule';
 
 function samplePayload(overrides: Partial<UserJwtPayload> = {}): UserJwtPayload {
   return {

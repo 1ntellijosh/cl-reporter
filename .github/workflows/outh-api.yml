@@ -1,13 +1,18 @@
-# Lint/build/test. Integration tests use a real Postgres 16 service (no in-process substitute — see oauth-api/tests/JestSetup.integration.ts).
-name: CI
+########################################################
+# OAuth API Test workflow for cl-reporter project
+#
+# @since setup-tests--JP
+########################################################
+name: test-oauth-api
 
 on:
-  push:
-    branches: [main, master]
   pull_request:
+    paths:
+      - 'auth-srv/**'
+      - 'packages/**'
 
 jobs:
-  oauth-api:
+  build-and-test:
     runs-on: ubuntu-latest
 
     services:

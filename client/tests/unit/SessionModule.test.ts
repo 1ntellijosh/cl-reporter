@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { APP_BILLING_STATUS_COOKIE_NAME, APP_SESSION_ACCESS_COOKIE_NAME } from '@reporter/common';
 import { cookieStoreMocks } from '../mocks/next-headers';
-import { SessionModule } from '../../lib/sessions/SessionModule';
+import { SessionModule } from '../../src/lib/sessions/SessionModule';
 
 describe('SessionModule', () => {
   beforeEach(() => {

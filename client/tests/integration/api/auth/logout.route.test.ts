@@ -4,12 +4,11 @@
  * @since setup-tests--JP
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { APP_BILLING_STATUS_COOKIE_NAME, APP_SESSION_ACCESS_COOKIE_NAME, OAUTH_STATE_COOKIE_NAME } from '@reporter/common';
 import { NextRequest } from 'next/server';
-import { POST } from '../../../../app/api/auth/logout/route';
+import { POST } from '../../../../src/app/api/auth/logout/route';
 import { setValidOAuthEnv } from '../../../JestSetup';
 import { cookieStoreMocks } from '../../../mocks/next-headers';
-import { SessionModule } from '../../../../lib/sessions/SessionModule';
+import { SessionModule } from '../../../../src/lib/sessions/SessionModule';
 
 function logoutRequest(): NextRequest {
   return new NextRequest('https://app.example.com/api/auth/logout');
