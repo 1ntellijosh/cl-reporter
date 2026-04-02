@@ -18,7 +18,7 @@ sequenceDiagram
     B->>CloverUI: Open Merchant Dashboard, click our app
     CloverUI->>B: Redirect to Site URL or Alternate Launch Path
     B->>S: GET entry page (/start in client)
-    Note over S: No session found in our app -> client /clover-callback: Generate random state and store it in an HttpOnly cookie (`cl_reporter_oauth_state`)
+    Note over S: No session found in our app -> client /clover-callback: Generate random state and store it in an HttpOnly cookie
     S->>B: 302 to Clover oauth v2 authorize with state
     B->>CloverUI: GET authorize, state in query string
     CloverUI->>B: Sign in or consent if needed
