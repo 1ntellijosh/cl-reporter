@@ -53,6 +53,28 @@ npm test
 
 *(Adjust if the repo uses `pnpm` or `yarn`.)*
 
+## Environment Variables
+
+Local dev baseline variables are defined in `dev-vars.yml`. The following names must be set (do not commit secrets):
+
+- `HOST_DOMAIN`
+- `JWT_SIGNING_KEY`
+- `CLOVER_CLIENT_ID`
+- `CLOVER_CLIENT_SECRET`
+- `CLOVER_OAUTH_AUTHORIZE_BASE`
+- `CLOVER_REDIRECT_URI`
+- `CLOVER_OAUTH_TOKEN_BASE`
+- `CLOVER_TOKEN_ENCRYPTION_KEY`
+- `DATABASE_USER`
+- `DATABASE_PASSWORD`
+- `RABBITMQ_PASSWORD`
+- `SERVER_API_BASE_URL`
+
+Additionally, Node services that use Drizzle/RabbitMQ require these injected runtime variables (typically via cluster manifests/scripts, not `dev-vars.yml`):
+
+- `DATABASE_URL`
+- `RABBITMQ_URL`
+
 **Database (Drizzle):** shared schema lives under **`packages/src/drizzle-orm/`** (exported from **`@reporter/middleware`** and **`@reporter/middleware/drizzle-orm`**); **`packages/drizzle.config.ts`** drives **`drizzle-kit generate`**; **`ops/database/migrate.ts`** runs migrations against **`ops/database/migrations`**. Apply migrations with **`make migrate`** (uses **`kubectl port-forward`** to in-cluster Postgres when **`DATABASE_URL`** is unset) or set **`DATABASE_URL`** and run **`npm run migrate -w @reporter/middleware`**. Generate new migrations: **`npm run db:generate -w @reporter/middleware`**. After you edit **`packages/src/drizzle-orm/schema.ts`**, you can run **`make schema-change-migration`** (alias: **`make scheme-change-migration`**) to **generate** and **apply** in one step.
 
 ## Conventions

@@ -57,7 +57,7 @@ describe('GET /api/auth/complete-clover (complete-clover route)', () => {
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
     expect(location).toBeTruthy();
-    expect(location).toBe(absolutePath(CL_ROUTES.OAUTH_CALLBACK));
+    expect(location).toBe(absolutePath(CL_ROUTES.API_OAUTH_CALLBACK));
   });
 
   it('returns 307 redirect to oauth callback when state does not match', async () => {
@@ -67,7 +67,7 @@ describe('GET /api/auth/complete-clover (complete-clover route)', () => {
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
     expect(location).toBeTruthy();
-    expect(location).toBe(absolutePath(CL_ROUTES.OAUTH_CALLBACK));
+    expect(location).toBe(absolutePath(CL_ROUTES.API_OAUTH_CALLBACK));
   });
 
   describe('when CSRF state matches and oauth-api exchange succeeds', () => {
