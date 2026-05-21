@@ -10,8 +10,12 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces"
+    "test": "npm run test --workspaces --if-present",
+    "playwright:install": "playwright install"
   },
   "author": "1ntellijosh",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
 }
