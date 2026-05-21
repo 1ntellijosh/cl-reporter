@@ -49,9 +49,12 @@ npm install
 npm run dev
 npm run lint
 npm test
+npm run playwright:install   # once per machine — browsers for agentic dev (Playwright MCP)
 ```
 
 *(Adjust if the repo uses `pnpm` or `yarn`.)*
+
+**Agentic browser (Playwright MCP, not automated tests):** Root **`devDependencies`** pins **`playwright`** for consistent browser installs (`npm run playwright:install`). **`.cursor/mcp.json`** sets **`--output-dir=.playwright-mcp`** so snapshots, console logs, and screenshots stay under **`.playwright-mcp/`** (gitignored) — use paths like **`screenshots/foo.png`**, not repo root. Use Playwright MCP against **`http://<HOST_DOMAIN>`** from **`dev-vars.yml`** (default **`reporter.com`** — **`make init`** + **`make dev`**). No **`playwright.config.ts`** or test suite in repo.
 
 **Database (Drizzle):** shared schema lives under **`packages/src/drizzle-orm/`** (exported from **`@reporter/middleware`** and **`@reporter/middleware/drizzle-orm`**); **`packages/drizzle.config.ts`** drives **`drizzle-kit generate`**; **`ops/database/migrate.ts`** runs migrations against **`ops/database/migrations`**. Apply migrations with **`make migrate`** (uses **`kubectl port-forward`** to in-cluster Postgres when **`DATABASE_URL`** is unset) or set **`DATABASE_URL`** and run **`npm run migrate -w @reporter/middleware`**. Generate new migrations: **`npm run db:generate -w @reporter/middleware`**. After you edit **`packages/src/drizzle-orm/schema.ts`**, you can run **`make schema-change-migration`** (alias: **`make scheme-change-migration`**) to **generate** and **apply** in one step.
 

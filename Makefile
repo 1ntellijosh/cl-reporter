@@ -236,3 +236,11 @@ schema-change-migration:
 # Uses POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB environment variables inside the container.
 db:
 	kubectl exec -it -n default cl-reporter-db-statefulset-0 -- sh -c 'PGPASSWORD="$$POSTGRES_PASSWORD" psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+
+##
+# PLAYWRIGHT COMMANDS:
+# --------------------------
+install-playwright:
+	npm install
+	npm run playwright:install
+

@@ -38,7 +38,30 @@ export default function HomePageContent({ isLoggedIn }: { isLoggedIn: boolean })
           </Button>
         </>
       ) : (
-        <Link href={CL_ROUTES.OAUTH_START}>Login</Link>
+        <Button
+          component={Link}
+          href={CL_ROUTES.OAUTH_START}
+          variant="contained"
+          disableElevation
+          sx={{
+            mt: 2,
+            color: '#fff',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            borderRadius: '6px',
+            border: '1px solid #c45c00',
+            background: 'linear-gradient(180deg, #f5d76e 0%, #f7941d 45%, #e65c00 100%)',
+            boxShadow: 'none',
+            px: 5,
+            py: 1.25,
+            '&:hover': {
+              background: 'linear-gradient(180deg, #f0cc55 0%, #ef8510 45%, #d95400 100%)',
+              boxShadow: 'none',
+            },
+          }}
+        >
+          Login
+        </Button>
       )}
     </Container>
   );
