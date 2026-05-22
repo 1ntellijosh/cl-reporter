@@ -39,7 +39,7 @@ export const handleStartPage = async (params: StartSearchParams): Promise<string
    * SCENARIO 3: No `code`, no app session — cold start (dashboard launch, direct browse, or odd params).
    * Clover: direct visits should go through OAuth, starting the flow from the beginning
    */
-  return CL_ROUTES.OAUTH_CALLBACK;
+  return CL_ROUTES.API_OAUTH_CALLBACK;
 };
 
 /**
@@ -62,7 +62,7 @@ async function onAppSessionPresent(merchantId: string, sessionPayload: UserJwtPa
     // TODO AGENT: Add logging here
     // appLogger.error('App session present but merchantId mismatch', { sessionPayload, merchantId });
     // 3. restart oauth
-    return CL_ROUTES.OAUTH_CALLBACK
+    return CL_ROUTES.API_OAUTH_CALLBACK
   }
 
   // NORMAL CASE: If merchant Id is the same as the session payload, return dashboard
@@ -83,5 +83,5 @@ function onCodeProvided(code: string, state: string): string {
   // Should never happen, but if state is empty, complete-clover will redirect to clover-callback torestart the flow
   sParams.set('state', state);
 
-  return `${CL_ROUTES.COMPLETE_CLOVER}?${sParams.toString()}`;
+  return `${CL_ROUTES.API_COMPLETE_CLOVER}?${sParams.toString()}`;
 }

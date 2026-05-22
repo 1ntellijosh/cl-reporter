@@ -31,10 +31,12 @@ Mixing **developer** URLs, **merchant** URLs, or **which account** you’re logg
 1. Merchant is logged into **Clover** (dashboard / app list) and clicks **our** app.
 2. Clover redirects the browser to our **Site URL** (and **Alternate Launch Path** when applicable) with OAuth parameters (e.g. **`merchantId`**, **`employee_id`**, **`code`** — exact set per [Clover OAuth](https://docs.clover.com/dev/docs/oauth-flows-in-clover)).
 3. Our **backend** receives the callback:
-   - Validates **`state`** (if we sent it) and **`redirect_uri`** alignment with app settings.
+   - Validates **`state`** (if we sent it) before exchanging the authorization `code`.
    - Exchanges **`code`** for **`access_token`** + **`refresh_token`** (+ expirations) using **`client_id`** / **`client_secret`** server-side only.
    - **Upserts** the **merchant** row: `merchant_id`, encrypted tokens, expirations.
-4. Our backend issues **our app session JWT** (access, and refresh handling per **§6.1**) for this merchant.
+4. Our backend issues **our app session**:
+   - Sets a **HttpOnly** cookie with our **access JWT** (`cl_reporter_app_access`).
+   - Also sets a client-readable **billing hint cookie** (`cl_reporter_billing_status`, UI only).
 5. Merchant lands in the **Next.js** app **logged in** on **our** domain.
 
 **Lockout avoidance here:** Idempotent callback handling (same `code` not processed twice); correct **redirect URI** registered in Clover for **sandbox** vs **prod**; never put **`client_secret`** in the client.
@@ -53,8 +55,7 @@ sequenceDiagram
     B->>CloverUI: Open Merchant Dashboard, click our app
     CloverUI->>B: Redirect to Site URL or Alternate Launch Path
     B->>S: GET entry page, no our-app session
-    Note over S: Generate random state and store it server-side
-    Note over S: e.g. HttpOnly cookie or server session
+    Note over S: Generate random state and store it in an HttpOnly cookie (`cl_reporter_oauth_state`)
     S->>B: 302 to Clover oauth v2 authorize with state
     B->>CloverUI: GET authorize, state in query string
     CloverUI->>B: Sign in or consent if needed
@@ -83,7 +84,7 @@ sequenceDiagram
 ## 4. Happy path — merchant opens our URL directly (bookmark / typed URL)
 
 1. Browser hits our app **without** a valid **our-app** session.
-2. We **redirect** to Clover **`/oauth/v2/authorize`** (with `client_id`, `redirect_uri`, `state`, etc.).
+2. We **redirect** to our OAuth entry (`/api/auth/clover-callback`), which **redirects** to Clover **`/oauth/v2/authorize`** (with `client_id`, `redirect_uri`, `state`, etc.).
 3. Merchant signs in at **Clover** if needed; Clover redirects back with **`code`**.
 4. Same as §3 steps 3–5: exchange code, store tokens, issue **our** session.
 
@@ -104,7 +105,7 @@ We **never** assume a Clover dashboard tab means “already logged in” on our 
 
 ## 6. Our app session — logout and rotation
 
-1. **Logout (our app):** **Drop** the **access JWT** from client memory; **revoke** refresh token server-side (or clear its cookie); add access **`jti`** to a **denylist** until expiry if we use one. **Do not** assume Clover dashboard logout is required for our app logout.
+1. **Logout (our app):** clear our app cookies (deleting `cl_reporter_app_access` and `cl_reporter_billing_status`). **Do not** assume Clover dashboard logout is required for our app logout.
 2. **Logout does not** revoke Clover tokens unless we explicitly call Clover flows that do — product decision; v1 can keep tokens until refresh fails or merchant disconnects in Clover.
 
 ### 6.1 App session — **v1 decisions** (JWT, TTL, logout, CSRF)
@@ -113,13 +114,14 @@ These are the **defaults** for implementation; tune durations and algorithms via
 
 | Topic | Decision |
 |--------|----------|
-| **Mechanism** | **JWT** for **our** app session (distinct from Clover’s OAuth tokens). After OAuth callback, our backend mints an **access JWT** (signed, e.g. HS256 or RS256) carrying **`merchant_id`** (or internal user id), **`jti`** (unique token id for revocation), **`exp`** / **`iat`**. The SPA sends it on our API calls as **`Authorization: Bearer <access_jwt>`**. **Do not** store the **access** JWT in `localStorage` or `sessionStorage` (XSS); keep it in **memory** (React state / closure). |
-| **Refresh** | **Access JWT** is **short-lived** (default **30 minutes**, tunable). For **silent renewal** without re-running Clover OAuth, use a **refresh token**: preferred transport is **`HttpOnly` + `Secure` + `SameSite=Strict` (or `Lax`)** cookie scoped to our **refresh** route only — this cookie holds **our** refresh token, **not** the opaque “session cookie” model; the **session** is still the **access JWT**. Alternative: refresh token only over **TLS** from native clients — not the v1 web path. **Rotate** refresh tokens on use and persist server-side if we need reuse detection. |
-| **TTL** | **Access:** **`exp`** typically **15–60 minutes** (env). **Refresh / absolute session:** cap **merchant login** to **30 days** from first issue unless re-authenticated (align refresh **`exp`** or server-side rotation). **Sliding** “activity” = successful refresh issues new access JWT. |
-| **Logout** | **Revoke** refresh token (delete server row or invalidate family); **clear** refresh `Set-Cookie`; add current access **`jti`** to **denylist** (Redis/DB) until **`exp`** if immediate invalidation of access JWT is required. Idempotent. |
-| **CSRF** | APIs authenticated by **`Authorization: Bearer`** are **not** vulnerable to classic **cookie CSRF** on those routes (browser does not attach our JWT automatically). **Still:** validate **Origin** / **Host** on **mutating** routes; protect **refresh** (if it uses a **cookie**) with **`SameSite`**, **Origin** checks, and (if needed) **CSRF token** on the refresh POST. **Do not** send the access JWT in a cookie for API auth — that would reintroduce CSRF surface. |
+| **Mechanism** | **JWT** for **our** app session (distinct from Clover’s OAuth tokens). After OAuth code exchange, our backend mints an **HS256 access JWT** containing **`cloverMerchantId`**, **`jti`**, and **`exp`/`iat`**. We store it in an **HttpOnly** cookie (`cl_reporter_app_access`). API services can read it from either **`Authorization: Bearer <access_jwt>`** or from the request **`Cookie`** header. **Do not** store it in `localStorage` or `sessionStorage` (XSS). |
+| **Refresh** | **No separate app-session refresh token/cookie in v1.** The access JWT is short-lived; when it’s missing/expired, the Next.js `/start` flow re-runs OAuth (`/api/auth/clover-callback`) to establish a new app session. |
+| **TTL** | **Access:** **30 minutes** default TTL (`APP_SESSION_ACCESS_TTL_SECONDS` with code fallback). |
+| **Billing hint cookie** | After successful OAuth, we set `cl_reporter_billing_status` as **non-HttpOnly** UI state (`ACTIVE`/`INACTIVE`/`TRIAL`). Clear it on logout. |
+| **Logout** | `POST /api/auth/logout` clears app cookies by deleting `cl_reporter_app_access` and `cl_reporter_billing_status`. Clover tokens are not revoked by default (v1 decision). |
+| **CSRF** | Since the app-session JWT is an **HttpOnly cookie**, standard web CSRF considerations apply for mutating endpoints. For OAuth specifically, we protect the code exchange using `state`: `/api/auth/clover-callback` sets `cl_reporter_oauth_state`, and `/api/auth/complete-clover` validates it before exchanging `code`. |
 
-**No refresh cookie (not v1 default):** You could avoid any cookie by issuing only a **long-lived access JWT** (weaker revocation, larger XSS blast radius if ever leaked) or by **re-running Clover OAuth** after every full page reload — both are worse UX or security than **short access JWT + HttpOnly refresh cookie**.
+**No refresh cookie (v1 default for app session):** when the short-lived access JWT expires, we recover by re-running Clover OAuth (instead of maintaining a separate refresh token for the browser).
 
 **PRD / backlog:** `docs/PRD.md` Appendix C item **App session mechanism** is satisfied by this section and the pointer in §6 of the PRD.
 
@@ -153,8 +155,8 @@ These are the **defaults** for implementation; tune durations and algorithms via
 
 1. **Entry:** Clover launch **or** direct URL → need **our** session?  
 2. **No session** → redirect **OAuth authorize** → callback with **code**.  
-3. **Exchange code** → store **merchant + Clover tokens** → issue **our access + refresh JWTs** (app session).  
-4. **Work:** Our APIs use **Bearer access JWT**; **workers** use Clover **`access_token`**; refresh Clover tokens as needed.  
+3. **Exchange code** → store **merchant + Clover tokens** → issue **our access JWT cookie** (and UI billing hint cookie).
+4. **Work:** Our APIs accept the app-session JWT either from an **HttpOnly cookie** (`cl_reporter_app_access`) or from **`Authorization: Bearer …`**; workers use Clover **`access_token`** and refresh Clover tokens as needed.
 5. **Daily** job enqueues merchants whose **Clover** `refresh_token_expiration` is within **~30 days**; workers **refresh** and persist the new pair.  
 6. **Clover refresh dead** → **Reconnect Clover** page → back to step 2.  
 7. **Logout** → revoke **our** JWTs / refresh; Clover tokens unchanged unless product says otherwise.

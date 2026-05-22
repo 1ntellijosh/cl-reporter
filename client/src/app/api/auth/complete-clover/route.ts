@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get('state') ?? '';
 
   if (!code?.trim()) {
-    return redirectToPath(request, CL_ROUTES.OAUTH_CALLBACK);
+    return redirectToPath(request, CL_ROUTES.API_OAUTH_CALLBACK);
   }
 
   const cookieStore = await cookies();
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
    * If the request state does not match the stored state, redirect to the OAuth callback.
    */
   if (!stateOk) {
-    return redirectToPath(request, CL_ROUTES.OAUTH_CALLBACK);
+    return redirectToPath(request, CL_ROUTES.API_OAUTH_CALLBACK);
   }
 
   const host = request.headers.get('host') ?? '';
@@ -77,7 +77,9 @@ export async function GET(request: NextRequest) {
 
     return redirectToPath(request, CL_ROUTES.REPORTS_DASHBOARD);
   } catch (error) {
-    console.error('complete-clover: exchange or session failed', error);
+    // TODO AGENT: Add logging here
+    // appLogger.error('complete-clover: exchange or session failed', error);
+    console.error('complete-clover: exchange or session failed');
 
     return redirectToPath(request, CL_ROUTES.ERROR);
   }

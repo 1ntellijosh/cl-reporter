@@ -9,7 +9,6 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
-/** Same directory as this file: `ops/database/migrations` (must not walk up to `ops/` and re-append `ops/database/…` or path becomes `ops/ops/database/…`). */
 function migrationsFolder(): string {
   return path.join(__dirname, 'migrations');
 }
@@ -28,7 +27,6 @@ async function main(): Promise<void> {
 
   try {
     await migrate(db, { migrationsFolder: migrationsFolder() });
-    console.log('Drizzle migrations applied.');
   } finally {
     await sql.end({ timeout: 5 });
   }

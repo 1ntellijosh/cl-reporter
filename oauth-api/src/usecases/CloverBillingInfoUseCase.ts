@@ -31,7 +31,7 @@ export class CloverBillingInfoUseCase extends AbstractCloverUseCase {
     } catch (error) {
       // TODO AGENT: Add logging here
       // appLogger.error('Error getting Clover billing info:', error);
-      console.error('Error getting Clover billing info:', error);
+      console.error('Error getting Clover billing info:');
       throw new ServerError('Error getting Clover billing info. Please try again later.');
     }
   }

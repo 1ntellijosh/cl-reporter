@@ -36,14 +36,14 @@ describe('handleStartPage', () => {
         state: 'state-token',
       });
 
-      expect(result).toBe(`${CL_ROUTES.COMPLETE_CLOVER}?code=auth-code&state=state-token`);
+      expect(result).toBe(`${CL_ROUTES.API_COMPLETE_CLOVER}?code=auth-code&state=state-token`);
       expect(SessionModule.getAppSessionPayload).not.toHaveBeenCalled();
     });
 
     it('uses empty state when state is omitted, still returns complete-clover', async () => {
       const result = await handleStartPage({ code: 'c' });
 
-      expect(result).toBe(`${CL_ROUTES.COMPLETE_CLOVER}?code=c&state=`);
+      expect(result).toBe(`${CL_ROUTES.API_COMPLETE_CLOVER}?code=c&state=`);
     });
   });
 
@@ -80,7 +80,7 @@ describe('handleStartPage', () => {
 
       const result = await handleStartPage({ merchant_id: 'm-b' });
 
-      expect(result).toBe(CL_ROUTES.OAUTH_CALLBACK);
+      expect(result).toBe(CL_ROUTES.API_OAUTH_CALLBACK);
       expect(SessionModule.clearAppSession).toHaveBeenCalled();
     });
   });
@@ -89,7 +89,7 @@ describe('handleStartPage', () => {
     it('returns oauth callback when no client_id (begin authorize)', async () => {
       const result = await handleStartPage({});
 
-      expect(result).toBe(CL_ROUTES.OAUTH_CALLBACK);
+      expect(result).toBe(CL_ROUTES.API_OAUTH_CALLBACK);
     });
   });
 });
